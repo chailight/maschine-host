@@ -1,0 +1,18 @@
+[Unit]
+Description=Maschine MK2 headless performance host
+After=sound.target
+
+[Service]
+Type=simple
+User=maschine
+Group=audio
+ExecStart=/usr/local/bin/maschine2-host --config /etc/maschine2-host/config.yaml
+Restart=on-failure
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+# The HID transport is not implemented. Do not add DeviceAllow for a guessed USB id.
+
+[Install]
+WantedBy=multi-user.target

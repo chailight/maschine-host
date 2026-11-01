@@ -1,0 +1,28 @@
+[package]
+name = "maschine2-host"
+version = "0.1.0"
+edition = "2021"
+description = "Headless performance host for a full-size Maschine MK2"
+license = "GPL-3.0-or-later"
+publish = false
+readme = "README.md"
+
+[features]
+default = []
+cpal-output = ["dep:cpal"]
+
+[dependencies]
+cpal = { version = "0.15", optional = true }
+hound = "3.5"
+midir = "0.10"
+serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
+signal-hook = "0.3"
+thiserror = "2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+hidapi = "2.6"
+
+[[bin]]
+name = "maschine2-host"
+path = "src/main.rs"

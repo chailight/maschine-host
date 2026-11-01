@@ -1,0 +1,11 @@
+# Copyright (C) the Encdr authors. SPDX-License-Identifier: GPL-3.0-or-later.
+# Report ids adapted from Encdr 0.7.8, encdr/descriptors/ni_maschine_mk2.json.
+# https://github.com/RufusIbiza/Encdr
+#
+# Live MK2 check, 2026-10-26: the left panel showed the page name across the
+# top and enc 1 through enc 4 in the four columns above the knobs. That check
+# did not write the right panel or the lamps. The right panel uses the same
+# strip shape with report id 225.
+matched: true
+left_report_id: 224
+right_report_id: 225

@@ -1,0 +1,60 @@
+# Labeled on 2026-10-26 from docs/hardware-spike/survey-session.log.
+# Same timed listen as the pad, group, and screen-knob capture. Names follow
+# the order that was pressed. `--listen` prints these names. The running host
+# loads this file for button lamps. These controls are not page, panic, or octave.
+#
+# Report 0x01. A press is a bit that rises for about 200 ms, then falls.
+# Report 0x20 kept flickering for a millisecond at a time and is not a button.
+#
+# Volume, Swing, and Tempo are button presses. The encoder is a separate
+# field on byte 8, not a different report for each of those buttons.
+# One clockwise detent steps 0x0f -> 0x00, then 0x00 -> 0x01 and upward.
+# The matching counter-clockwise detent steps back, 0x00 -> 0x0f.
+# After each of those three button presses the log shows one step out and
+# back on `encoder`. The later data-encoder turn is the same byte, counted
+# 0x00 through 0x08. Which parameter that encoder edits is a software mode.
+# Restart is byte 5 bit 0, confirmed by docs/hardware-spike/restart-click.log.
+# The master encoder click is byte 3 bit 7. Turning the encoder does not
+# press that bit.
+fields:
+  - {control: display-button-1, kind: bit, report: 1, byte: 1, bit: 0}
+  - {control: display-button-2, kind: bit, report: 1, byte: 1, bit: 1}
+  - {control: display-button-3, kind: bit, report: 1, byte: 1, bit: 2}
+  - {control: display-button-4, kind: bit, report: 1, byte: 1, bit: 3}
+  - {control: display-button-5, kind: bit, report: 1, byte: 1, bit: 4}
+  - {control: display-button-6, kind: bit, report: 1, byte: 1, bit: 5}
+  - {control: display-button-7, kind: bit, report: 1, byte: 1, bit: 6}
+  - {control: display-button-8, kind: bit, report: 1, byte: 1, bit: 7}
+  - {control: control, kind: bit, report: 1, byte: 2, bit: 0}
+  - {control: step, kind: bit, report: 1, byte: 2, bit: 1}
+  - {control: browse, kind: bit, report: 1, byte: 2, bit: 2}
+  - {control: sampling, kind: bit, report: 1, byte: 2, bit: 3}
+  - {control: display-left, kind: bit, report: 1, byte: 2, bit: 4}
+  - {control: display-right, kind: bit, report: 1, byte: 2, bit: 5}
+  - {control: all, kind: bit, report: 1, byte: 2, bit: 6}
+  - {control: auto-write, kind: bit, report: 1, byte: 2, bit: 7}
+  - {control: volume, kind: bit, report: 1, byte: 3, bit: 0}
+  - {control: swing, kind: bit, report: 1, byte: 3, bit: 1}
+  - {control: tempo, kind: bit, report: 1, byte: 3, bit: 2}
+  - {control: master-left, kind: bit, report: 1, byte: 3, bit: 3}
+  - {control: master-right, kind: bit, report: 1, byte: 3, bit: 4}
+  - {control: enter, kind: bit, report: 1, byte: 3, bit: 5}
+  - {control: note-repeat, kind: bit, report: 1, byte: 3, bit: 6}
+  - {control: encoder-click, kind: bit, report: 1, byte: 3, bit: 7}
+  - {control: restart, kind: bit, report: 1, byte: 5, bit: 0}
+  - {control: transport-left, kind: bit, report: 1, byte: 5, bit: 1}
+  - {control: transport-right, kind: bit, report: 1, byte: 5, bit: 2}
+  - {control: grid, kind: bit, report: 1, byte: 5, bit: 3}
+  - {control: play, kind: bit, report: 1, byte: 5, bit: 4}
+  - {control: rec, kind: bit, report: 1, byte: 5, bit: 5}
+  - {control: erase, kind: bit, report: 1, byte: 5, bit: 6}
+  - {control: shift, kind: bit, report: 1, byte: 5, bit: 7}
+  - {control: scene, kind: bit, report: 1, byte: 6, bit: 0}
+  - {control: pattern, kind: bit, report: 1, byte: 6, bit: 1}
+  - {control: pad-mode, kind: bit, report: 1, byte: 6, bit: 2}
+  - {control: navigate, kind: bit, report: 1, byte: 6, bit: 3}
+  - {control: duplicate, kind: bit, report: 1, byte: 6, bit: 4}
+  - {control: select, kind: bit, report: 1, byte: 6, bit: 5}
+  - {control: solo, kind: bit, report: 1, byte: 6, bit: 6}
+  - {control: mute, kind: bit, report: 1, byte: 6, bit: 7}
+  - {control: encoder, kind: nibble4, report: 1, byte: 8}

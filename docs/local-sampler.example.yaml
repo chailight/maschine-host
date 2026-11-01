@@ -1,0 +1,83 @@
+schema_version: 1
+midi_outputs:
+  bitbox: "CONFIGURE_PORT_NAME"
+display:
+  min_interval_ms: 50
+audio:
+  device: null
+  sample_rate: 48000
+  buffer_frames: 256
+  polyphony: 8
+groups:
+  - id: A
+    label: Local one shots
+    mode: one_shot
+    destination: {type: sampler, instrument: clicks}
+    trigger: ignore_release
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+    samples:
+      - {path: samples/click.wav, choke: 1}
+      - {path: samples/click.wav}
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+      - null
+  - id: B
+    label: Local chromatic
+    mode: chromatic
+    destination: {type: sampler, instrument: tone}
+    notes: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]
+    zones:
+      - {path: samples/click.wav, root: 60, lo: 0, hi: 127}
+  - id: C
+    label: Midi spare
+    mode: one_shot
+    destination: {type: midi, port: bitbox, channel: 3}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: D
+    label: Midi spare
+    mode: one_shot
+    destination: {type: midi, port: bitbox, channel: 4}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: E
+    label: Midi spare
+    mode: one_shot
+    destination: {type: midi, port: bitbox, channel: 5}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: F
+    label: Midi spare
+    mode: one_shot
+    destination: {type: midi, port: bitbox, channel: 6}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: G
+    label: Midi spare
+    mode: one_shot
+    destination: {type: midi, port: bitbox, channel: 7}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: H
+    label: Midi spare
+    mode: one_shot
+    destination: {type: midi, port: bitbox, channel: 8}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+encoder_pages:
+  - id: level
+    label: Local level
+    encoders:
+      - {label: Level, type: local, target: level, min: 0, max: 100, default: 40}
+      - {label: Unused 2, type: unbound}
+      - {label: Unused 3, type: unbound}
+      - {label: Unused 4, type: unbound}
+      - {label: Unused 5, type: unbound}
+      - {label: Unused 6, type: unbound}
+      - {label: Unused 7, type: unbound}
+      - {label: Unused 8, type: unbound}

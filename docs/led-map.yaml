@@ -1,0 +1,39 @@
+# Copyright (C) the Encdr authors. SPDX-License-Identifier: GPL-3.0-or-later.
+# Adapted from Encdr 0.7.8, encdr/descriptors/ni_maschine_mk2.json.
+# https://github.com/RufusIbiza/Encdr
+#
+# Live MK2 check, 2026-10-26: bottom-left pad (bytes 37-39) was white, and
+# Group A was white across the button when bytes 1-6 were filled. Each other
+# group uses the same six-byte width. Bytes 49-56 stay 0 so button lamps are
+# not written.
+matched: true
+pad_report: 128
+pad_length: 49
+pads:
+  - [37, 38, 39]
+  - [40, 41, 42]
+  - [43, 44, 45]
+  - [46, 47, 48]
+  - [25, 26, 27]
+  - [28, 29, 30]
+  - [31, 32, 33]
+  - [34, 35, 36]
+  - [13, 14, 15]
+  - [16, 17, 18]
+  - [19, 20, 21]
+  - [22, 23, 24]
+  - [1, 2, 3]
+  - [4, 5, 6]
+  - [7, 8, 9]
+  - [10, 11, 12]
+group_report: 129
+group_length: 57
+groups:
+  - [[1, 2, 3], [4, 5, 6]]
+  - [[7, 8, 9], [10, 11, 12]]
+  - [[13, 14, 15], [16, 17, 18]]
+  - [[19, 20, 21], [22, 23, 24]]
+  - [[25, 26, 27], [28, 29, 30]]
+  - [[31, 32, 33], [34, 35, 36]]
+  - [[37, 38, 39], [40, 41, 42]]
+  - [[43, 44, 45], [46, 47, 48]]

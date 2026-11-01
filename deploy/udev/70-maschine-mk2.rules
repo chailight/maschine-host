@@ -1,0 +1,5 @@
+# Not verified on hardware. Inspected Encdr descriptor ni_maschine_mk2.json
+# labels the full-size MK2 as 17cc:1140. Product 1200 in that same set is the
+# Mikro MK2. Install this only after the connected device shows 1140.
+# Group audio, not world-writable.
+SUBSYSTEM=="hidraw", ATTRS{idVendor}=="17cc", ATTRS{idProduct}=="1140", GROUP="audio", MODE="0660"

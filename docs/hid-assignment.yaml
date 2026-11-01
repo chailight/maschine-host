@@ -1,0 +1,39 @@
+# Labeled on 2026-10-26 from docs/hardware-spike/capture-session.log.
+# Pads were pressed bottom-left to top-right. The eight screen knobs were
+# turned clockwise, then groups A-H were pressed. Report 0x20 bytes 33-64
+# repeat the pad block. Both copies must be above zero before a press counts.
+# A knob count changes by 4 for the smallest step seen, so scale 4 emits +1.
+stand_in_press: 100
+fields:
+  - {control: pad:0, kind: adc12, report: 32, value_byte: 25, high_byte: 26}
+  - {control: pad:1, kind: adc12, report: 32, value_byte: 27, high_byte: 28}
+  - {control: pad:2, kind: adc12, report: 32, value_byte: 29, high_byte: 30}
+  - {control: pad:3, kind: adc12, report: 32, value_byte: 31, high_byte: 32}
+  - {control: pad:4, kind: adc12, report: 32, value_byte: 17, high_byte: 18}
+  - {control: pad:5, kind: adc12, report: 32, value_byte: 19, high_byte: 20}
+  - {control: pad:6, kind: adc12, report: 32, value_byte: 21, high_byte: 22}
+  - {control: pad:7, kind: adc12, report: 32, value_byte: 23, high_byte: 24}
+  - {control: pad:8, kind: adc12, report: 32, value_byte: 9, high_byte: 10}
+  - {control: pad:9, kind: adc12, report: 32, value_byte: 11, high_byte: 12}
+  - {control: pad:10, kind: adc12, report: 32, value_byte: 13, high_byte: 14}
+  - {control: pad:11, kind: adc12, report: 32, value_byte: 15, high_byte: 16}
+  - {control: pad:12, kind: adc12, report: 32, value_byte: 1, high_byte: 2}
+  - {control: pad:13, kind: adc12, report: 32, value_byte: 3, high_byte: 4}
+  - {control: pad:14, kind: adc12, report: 32, value_byte: 5, high_byte: 6}
+  - {control: pad:15, kind: adc12, report: 32, value_byte: 7, high_byte: 8}
+  - {control: group:A, kind: bit, report: 1, byte: 4, bit: 0}
+  - {control: group:B, kind: bit, report: 1, byte: 4, bit: 1}
+  - {control: group:C, kind: bit, report: 1, byte: 4, bit: 2}
+  - {control: group:D, kind: bit, report: 1, byte: 4, bit: 3}
+  - {control: group:E, kind: bit, report: 1, byte: 4, bit: 4}
+  - {control: group:F, kind: bit, report: 1, byte: 4, bit: 5}
+  - {control: group:G, kind: bit, report: 1, byte: 4, bit: 6}
+  - {control: group:H, kind: bit, report: 1, byte: 4, bit: 7}
+  - {control: encoder:0, kind: pos10, report: 1, low_byte: 9, high_byte: 10, scale: 4}
+  - {control: encoder:1, kind: pos10, report: 1, low_byte: 11, high_byte: 12, scale: 4}
+  - {control: encoder:2, kind: pos10, report: 1, low_byte: 13, high_byte: 14, scale: 4}
+  - {control: encoder:3, kind: pos10, report: 1, low_byte: 15, high_byte: 16, scale: 4}
+  - {control: encoder:4, kind: pos10, report: 1, low_byte: 17, high_byte: 18, scale: 4}
+  - {control: encoder:5, kind: pos10, report: 1, low_byte: 19, high_byte: 20, scale: 4}
+  - {control: encoder:6, kind: pos10, report: 1, low_byte: 21, high_byte: 22, scale: 4}
+  - {control: encoder:7, kind: pos10, report: 1, low_byte: 23, high_byte: 24, scale: 4}

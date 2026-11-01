@@ -1,0 +1,94 @@
+# Two pages of generic encoder labels. This file is the panel proof and the
+# long-term example. It is not the Bitbox page set. CC numbers stay unset.
+schema_version: 1
+# Placeholder profile. CC numbers are intentionally null.
+# They are not assignments from any Bitbox firmware.
+# bitbox is a virtual CoreMIDI output so a pad note-on can be confirmed.
+# Each group color is the full LED color. Idle pads use a dimmer shade of the
+# selected group, and a held pad uses the full color.
+midi_outputs:
+  bitbox:
+    name: Maschine2 Host
+    virtual_port: true
+log_level: info
+display:
+  min_interval_ms: 50
+audio:
+  device: null
+  sample_rate: 48000
+  buffer_frames: 256
+  polyphony: 8
+groups:
+  - id: A
+    label: Vocal shots
+    mode: one_shot
+    color: [255, 32, 16]
+    destination: {type: midi, port: bitbox, channel: 1}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: B
+    label: Bass multisample
+    mode: chromatic
+    color: [255, 96, 0]
+    destination: {type: midi, port: bitbox, channel: 2}
+    notes: [48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]
+  - id: C
+    label: Scale map
+    mode: scale
+    color: [255, 196, 0]
+    destination: {type: midi, port: bitbox, channel: 3}
+    notes: [60, 64, 67, 72, 60, 64, 67, 72, 60, 64, 67, 72, 60, 64, 67, 72]
+  - id: D
+    label: Percussion
+    mode: one_shot
+    color: [0, 176, 48]
+    destination: {type: midi, port: bitbox, channel: 4}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: E
+    label: Hats
+    mode: one_shot
+    color: [0, 176, 176]
+    destination: {type: midi, port: bitbox, channel: 5}
+    notes: [42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57]
+  - id: F
+    label: Chords
+    mode: chromatic
+    color: [32, 64, 255]
+    destination: {type: midi, port: bitbox, channel: 6}
+    notes: [60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75]
+  - id: G
+    label: Stabs
+    mode: one_shot
+    color: [160, 32, 255]
+    destination: {type: midi, port: bitbox, channel: 7}
+    notes: [36, 38, 40, 41, 43, 45, 47, 48, 50, 52, 53, 55, 57, 59, 60, 62]
+  - id: H
+    label: Spare
+    mode: one_shot
+    color: [255, 0, 144]
+    destination: {type: midi, port: bitbox, channel: 8}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+encoder_pages:
+  # Generic labels for the panel proof and the long-term example.
+  # Controller numbers stay empty here. The Bitbox pages live in docs/example-config.yaml.
+  - id: page-1
+    label: Page 1
+    encoders:
+      - {label: enc 1, type: midi_cc, port: bitbox, channel: 1, cc: null}
+      - {label: enc 2, type: midi_cc, port: bitbox, channel: 2, cc: null}
+      - {label: enc 3, type: midi_cc, port: bitbox, channel: 3, cc: null}
+      - {label: enc 4, type: midi_cc, port: bitbox, channel: 4, cc: null}
+      - {label: enc 5, type: midi_cc, port: bitbox, channel: 5, cc: null}
+      - {label: enc 6, type: midi_cc, port: bitbox, channel: 6, cc: null}
+      - {label: enc 7, type: midi_cc, port: bitbox, channel: 7, cc: null}
+      - {label: enc 8, type: midi_cc, port: bitbox, channel: 8, cc: null}
+  - id: page-2
+    label: Page 2
+    encoders:
+      - {label: enc 1, type: midi_cc, port: bitbox, channel: 1, cc: null}
+      - {label: enc 2, type: midi_cc, port: bitbox, channel: 2, cc: null}
+      - {label: enc 3, type: midi_cc, port: bitbox, channel: 3, cc: null}
+      - {label: enc 4, type: midi_cc, port: bitbox, channel: 4, cc: null}
+      - {label: enc 5, type: midi_cc, port: bitbox, channel: 5, cc: null}
+      - {label: enc 6, type: midi_cc, port: bitbox, channel: 6, cc: null}
+      - {label: enc 7, type: midi_cc, port: bitbox, channel: 7, cc: null}
+      - {label: enc 8, type: midi_cc, port: bitbox, channel: 8, cc: null}

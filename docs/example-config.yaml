@@ -1,0 +1,1322 @@
+schema_version: 1
+# Bitbox profile. Pad notes and channels, and the encoder controllers, are
+# editable here. Encoder pages are the eight Bitbox control categories.
+# Learned controllers 30-39 are proposed by the host; the Bitbox learns them.
+# bitbox names the MIDI output below. This file opens iConnectMIDI4+ DIN 4.
+# Each group color is the full LED color. Idle pads use a dimmer shade of the
+# selected group, and a held pad uses the full color.
+midi_outputs:
+  bitbox:
+    name: iConnectMIDI4+ DIN 4
+    virtual_port: false 
+log_level: info
+display:
+  min_interval_ms: 50
+audio:
+  device: null
+  sample_rate: 48000
+  buffer_frames: 256
+  polyphony: 8
+groups:
+  - id: A
+    label: Vocal shots
+    mode: one_shot
+    color: [255, 32, 16]
+    destination: {type: midi, port: bitbox, channel: 1}
+    velocity_curve: 0.5
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: B
+    label: Bass multisample
+    mode: chromatic
+    color: [255, 96, 0]
+    destination: {type: midi, port: bitbox, channel: 2}
+    velocity_curve: 0.5
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: C
+    label: Scale map
+    mode: scale
+    color: [255, 196, 0]
+    destination: {type: midi, port: bitbox, channel: 3}
+    velocity_curve: 0.5
+    note_scale: {root: 48, name: natural-minor}
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: D
+    label: Percussion
+    mode: one_shot
+    color: [0, 176, 48]
+    destination: {type: midi, port: bitbox, channel: 4}
+    velocity_curve: 0.5
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: E
+    label: Hats
+    mode: one_shot
+    color: [0, 176, 176]
+    destination: {type: midi, port: bitbox, channel: 5}
+    velocity_curve: 0.5
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: F
+    label: Chords
+    mode: chromatic
+    color: [32, 64, 255]
+    destination: {type: midi, port: bitbox, channel: 6}
+    velocity_curve: 0.5
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: G
+    label: Stabs
+    mode: one_shot
+    color: [160, 32, 255]
+    destination: {type: midi, port: bitbox, channel: 7}
+    velocity_curve: 0.5
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+  - id: H
+    label: Spare
+    mode: one_shot
+    color: [255, 0, 144]
+    destination: {type: midi, port: bitbox, channel: 8}
+    velocity_curve: 0.5
+    notes: [36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51]
+encoder_pages:
+  - id: perform
+    label: Perform
+    category: PERFORM
+    encoders:
+      - label: Delay send
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: selected
+      - label: Reverb send
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: selected
+      - label: Feedback
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 30
+        default: 0
+        parameter: delay-feedback
+        scope: global
+      - label: Time
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 31
+        default: 0
+        parameter: delay-time
+        scope: global
+      - label: Pad
+        type: unbound
+      - label: Pad
+        type: unbound
+      - label: Pad
+        type: unbound
+      - label: Pad
+        type: unbound
+    profiles:
+      sample:
+        - label: Reverse
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 86
+          default: 0
+          parameter: reverse
+          scope: selected
+          format: on-off
+        - label: Sustain
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 87
+          default: 0
+          parameter: sustain
+          scope: selected
+        - label: Loop mode
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 88
+          default: 0
+          parameter: loop-mode
+          scope: selected
+        - label: Crossfade
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 89
+          default: 0
+          parameter: loop-crossfade
+          scope: selected
+      granular:
+        - label: Density
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 79
+          default: 0
+          parameter: density
+          scope: selected
+        - label: Grain size
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 80
+          default: 0
+          parameter: grain-size
+          scope: selected
+        - label: Window
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 81
+          default: 0
+          parameter: window
+          scope: selected
+        - label: Scatter
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 82
+          default: 0
+          parameter: scatter
+          scope: selected
+      clip:
+        - label: Live Flip
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 117
+          default: 0
+          parameter: live-flip
+          scope: selected
+        - label: Jungle
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 115
+          default: 0
+          parameter: jungle-cycle
+          scope: selected
+        - label: Tempo
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 114
+          default: 0
+          parameter: manual-tempo
+          scope: selected
+        - label: --
+          type: unbound
+      slicer:
+        - label: Play through
+          type: midi_cc
+          port: bitbox
+          channel: 1
+          cc: 90
+          default: 0
+          parameter: play-through
+          scope: selected
+          format: on-off
+        - label: --
+          type: unbound
+        - label: --
+          type: unbound
+        - label: --
+          type: unbound
+
+  - id: mix-delay
+    label: Delay send
+    category: MIX
+    encoders:
+      - label: Delay 1
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: slot
+      - label: Delay 2
+        type: midi_cc
+        port: bitbox
+        channel: 2
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: slot
+      - label: Delay 3
+        type: midi_cc
+        port: bitbox
+        channel: 3
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: slot
+      - label: Delay 4
+        type: midi_cc
+        port: bitbox
+        channel: 4
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: slot
+      - label: Delay 5
+        type: midi_cc
+        port: bitbox
+        channel: 5
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: slot
+      - label: Delay 6
+        type: midi_cc
+        port: bitbox
+        channel: 6
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: slot
+      - label: Delay 7
+        type: midi_cc
+        port: bitbox
+        channel: 7
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: slot
+      - label: Delay 8
+        type: midi_cc
+        port: bitbox
+        channel: 8
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: slot
+
+  - id: mix-reverb
+    label: Reverb send
+    category: MIX
+    encoders:
+      - label: Reverb 1
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: slot
+      - label: Reverb 2
+        type: midi_cc
+        port: bitbox
+        channel: 2
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: slot
+      - label: Reverb 3
+        type: midi_cc
+        port: bitbox
+        channel: 3
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: slot
+      - label: Reverb 4
+        type: midi_cc
+        port: bitbox
+        channel: 4
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: slot
+      - label: Reverb 5
+        type: midi_cc
+        port: bitbox
+        channel: 5
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: slot
+      - label: Reverb 6
+        type: midi_cc
+        port: bitbox
+        channel: 6
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: slot
+      - label: Reverb 7
+        type: midi_cc
+        port: bitbox
+        channel: 7
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: slot
+      - label: Reverb 8
+        type: midi_cc
+        port: bitbox
+        channel: 8
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: slot
+
+  - id: mix-level
+    label: Level
+    category: MIX
+    encoders:
+      - label: Level 1
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 36
+        default: 0
+        parameter: level
+        scope: slot
+      - label: Level 2
+        type: midi_cc
+        port: bitbox
+        channel: 2
+        cc: 36
+        default: 0
+        parameter: level
+        scope: slot
+      - label: Level 3
+        type: midi_cc
+        port: bitbox
+        channel: 3
+        cc: 36
+        default: 0
+        parameter: level
+        scope: slot
+      - label: Level 4
+        type: midi_cc
+        port: bitbox
+        channel: 4
+        cc: 36
+        default: 0
+        parameter: level
+        scope: slot
+      - label: Level 5
+        type: midi_cc
+        port: bitbox
+        channel: 5
+        cc: 36
+        default: 0
+        parameter: level
+        scope: slot
+      - label: Level 6
+        type: midi_cc
+        port: bitbox
+        channel: 6
+        cc: 36
+        default: 0
+        parameter: level
+        scope: slot
+      - label: Level 7
+        type: midi_cc
+        port: bitbox
+        channel: 7
+        cc: 36
+        default: 0
+        parameter: level
+        scope: slot
+      - label: Level 8
+        type: midi_cc
+        port: bitbox
+        channel: 8
+        cc: 36
+        default: 0
+        parameter: level
+        scope: slot
+
+  - id: mix-filter
+    label: Filter
+    category: MIX
+    encoders:
+      - label: Filter 1
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 37
+        default: 0
+        parameter: filter
+        scope: slot
+      - label: Filter 2
+        type: midi_cc
+        port: bitbox
+        channel: 2
+        cc: 37
+        default: 0
+        parameter: filter
+        scope: slot
+      - label: Filter 3
+        type: midi_cc
+        port: bitbox
+        channel: 3
+        cc: 37
+        default: 0
+        parameter: filter
+        scope: slot
+      - label: Filter 4
+        type: midi_cc
+        port: bitbox
+        channel: 4
+        cc: 37
+        default: 0
+        parameter: filter
+        scope: slot
+      - label: Filter 5
+        type: midi_cc
+        port: bitbox
+        channel: 5
+        cc: 37
+        default: 0
+        parameter: filter
+        scope: slot
+      - label: Filter 6
+        type: midi_cc
+        port: bitbox
+        channel: 6
+        cc: 37
+        default: 0
+        parameter: filter
+        scope: slot
+      - label: Filter 7
+        type: midi_cc
+        port: bitbox
+        channel: 7
+        cc: 37
+        default: 0
+        parameter: filter
+        scope: slot
+      - label: Filter 8
+        type: midi_cc
+        port: bitbox
+        channel: 8
+        cc: 37
+        default: 0
+        parameter: filter
+        scope: slot
+
+  - id: mix-pan
+    label: Pan
+    category: MIX
+    encoders:
+      - label: Pan 1
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 38
+        default: 0
+        parameter: pan
+        scope: slot
+      - label: Pan 2
+        type: midi_cc
+        port: bitbox
+        channel: 2
+        cc: 38
+        default: 0
+        parameter: pan
+        scope: slot
+      - label: Pan 3
+        type: midi_cc
+        port: bitbox
+        channel: 3
+        cc: 38
+        default: 0
+        parameter: pan
+        scope: slot
+      - label: Pan 4
+        type: midi_cc
+        port: bitbox
+        channel: 4
+        cc: 38
+        default: 0
+        parameter: pan
+        scope: slot
+      - label: Pan 5
+        type: midi_cc
+        port: bitbox
+        channel: 5
+        cc: 38
+        default: 0
+        parameter: pan
+        scope: slot
+      - label: Pan 6
+        type: midi_cc
+        port: bitbox
+        channel: 6
+        cc: 38
+        default: 0
+        parameter: pan
+        scope: slot
+      - label: Pan 7
+        type: midi_cc
+        port: bitbox
+        channel: 7
+        cc: 38
+        default: 0
+        parameter: pan
+        scope: slot
+      - label: Pan 8
+        type: midi_cc
+        port: bitbox
+        channel: 8
+        cc: 38
+        default: 0
+        parameter: pan
+        scope: slot
+
+  - id: mix-pitch
+    label: Pitch
+    category: MIX
+    encoders:
+      - label: Pitch 1
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 39
+        default: 0
+        parameter: pitch
+        scope: slot
+      - label: Pitch 2
+        type: midi_cc
+        port: bitbox
+        channel: 2
+        cc: 39
+        default: 0
+        parameter: pitch
+        scope: slot
+      - label: Pitch 3
+        type: midi_cc
+        port: bitbox
+        channel: 3
+        cc: 39
+        default: 0
+        parameter: pitch
+        scope: slot
+      - label: Pitch 4
+        type: midi_cc
+        port: bitbox
+        channel: 4
+        cc: 39
+        default: 0
+        parameter: pitch
+        scope: slot
+      - label: Pitch 5
+        type: midi_cc
+        port: bitbox
+        channel: 5
+        cc: 39
+        default: 0
+        parameter: pitch
+        scope: slot
+      - label: Pitch 6
+        type: midi_cc
+        port: bitbox
+        channel: 6
+        cc: 39
+        default: 0
+        parameter: pitch
+        scope: slot
+      - label: Pitch 7
+        type: midi_cc
+        port: bitbox
+        channel: 7
+        cc: 39
+        default: 0
+        parameter: pitch
+        scope: slot
+      - label: Pitch 8
+        type: midi_cc
+        port: bitbox
+        channel: 8
+        cc: 39
+        default: 0
+        parameter: pitch
+        scope: slot
+
+  - id: delay
+    label: Delay
+    category: DELAY
+    encoders:
+      - label: Beat sync
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 108
+        default: 0
+        parameter: delay-sync
+        scope: global
+        format: on-off
+      - label: Ping-pong
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 109
+        default: 0
+        parameter: delay-ping
+        scope: global
+        format: on-off
+      - label: Filter
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 110
+        default: 0
+        parameter: delay-filter
+        scope: global
+        format: on-off
+      - label: Width
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 111
+        default: 0
+        parameter: delay-width
+        scope: global
+      - label: Feedback
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 30
+        default: 0
+        parameter: delay-feedback
+        scope: global
+      - label: Time
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 31
+        default: 0
+        parameter: delay-time
+        scope: global
+      - label: Cutoff
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 32
+        default: 0
+        parameter: delay-cutoff
+        scope: global
+      - label: --
+        type: unbound
+
+  - id: reverb
+    label: Reverb
+    category: REVERB
+    encoders:
+      - label: Decay
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 33
+        default: 0
+        parameter: reverb-decay
+        scope: global
+      - label: Damping
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 34
+        default: 0
+        parameter: reverb-damping
+        scope: global
+      - label: Pre-delay
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 35
+        default: 0
+        parameter: reverb-predelay
+        scope: global
+      - label: Reverb send
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 85
+        default: 0
+        parameter: reverb-send
+        scope: selected
+      - label: Delay send
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 84
+        default: 0
+        parameter: delay-send
+        scope: selected
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+
+  - id: char-amount
+    label: Character
+    category: CHAR
+    encoders:
+      - label: Amount
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 14
+        default: 0
+        parameter: char-amount-1
+        scope: global
+      - label: Amount
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 15
+        default: 0
+        parameter: char-amount-2
+        scope: global
+      - label: Amount
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 16
+        default: 0
+        parameter: char-amount-3
+        scope: global
+      - label: Amount
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 17
+        default: 0
+        parameter: char-amount-4
+        scope: global
+      - label: Tone
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 18
+        default: 64
+        parameter: char-tone-1
+        scope: global
+      - label: Tone
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 19
+        default: 64
+        parameter: char-tone-2
+        scope: global
+      - label: Tone
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 20
+        default: 64
+        parameter: char-tone-3
+        scope: global
+      - label: Tone
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 21
+        default: 64
+        parameter: char-tone-4
+        scope: global
+
+  - id: char-pick
+    label: Algorithm
+    category: CHAR
+    encoders:
+      - label: Type
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 22
+        default: 0
+        parameter: char-pick-1
+        scope: global
+      - label: Type
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 23
+        default: 0
+        parameter: char-pick-2
+        scope: global
+      - label: Type
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 24
+        default: 0
+        parameter: char-pick-3
+        scope: global
+      - label: Type
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 25
+        default: 0
+        parameter: char-pick-4
+        scope: global
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+
+  - id: comp
+    label: Compressor
+    category: DYNAM
+    encoders:
+      - label: Enable
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 40
+        default: 0
+        parameter: comp-enable
+        scope: global
+        format: on-off
+      - label: A
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 41
+        default: 90
+        parameter: comp-a
+        scope: global
+      - label: B
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 42
+        default: 7
+        parameter: comp-b
+        scope: global
+      - label: C
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 43
+        default: 38
+        parameter: comp-c
+        scope: global
+      - label: D
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 44
+        default: 37
+        parameter: comp-d
+        scope: global
+      - label: E
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 45
+        default: 64
+        parameter: comp-e
+        scope: global
+      - label: Type
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 47
+        default: 0
+        parameter: comp-type
+        scope: global
+      - label: --
+        type: unbound
+
+  - id: eq
+    label: EQ
+    category: EQ
+    encoders:
+      - label: Type
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 50
+        default: 6
+        parameter: eq-mode
+        scope: global
+      - label: Filter
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 51
+        default: 64
+        parameter: eq-a
+        scope: global
+      - label: Resonance
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 52
+        default: 64
+        parameter: eq-b
+        scope: global
+      - label: Knee
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 53
+        default: 64
+        parameter: eq-c
+        scope: global
+      - label: Push
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 54
+        default: 0
+        parameter: eq-push-1
+        scope: global
+        format: on-off
+      - label: Push
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 55
+        default: 0
+        parameter: eq-push-2
+        scope: global
+        format: on-off
+      - label: Push
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 56
+        default: 0
+        parameter: eq-push-3
+        scope: global
+        format: on-off
+      - label: Bypass
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 57
+        default: 0
+        parameter: eq-bypass
+        scope: global
+        format: on-off
+
+  - id: eq-slope
+    label: Slope
+    category: EQ
+    encoders:
+      - label: Slope
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 59
+        default: 0
+        parameter: eq-slope
+        scope: global
+        format: on-off
+      - label: Speed
+        type: local
+        target: lfo-rate
+        default: 64
+        parameter: eq-lfo-rate
+        scope: global
+      - label: Depth
+        type: local
+        target: lfo-depth
+        default: 0
+        parameter: eq-lfo-depth
+        scope: global
+      - label: Shape
+        type: local
+        target: lfo-shape
+        default: 0
+        parameter: eq-lfo-shape
+        scope: global
+      - label: Dest
+        type: local
+        target: lfo-dest
+        default: 0
+        parameter: eq-lfo-dest
+        scope: global
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+
+  - id: pad-sample
+    label: Sample
+    category: PAD
+    encoders:
+      - label: Reverse
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 86
+        default: 0
+        parameter: reverse
+        scope: selected
+        format: on-off
+        pad_types: [sample]
+      - label: Sustain
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 87
+        default: 0
+        parameter: sustain
+        scope: selected
+        pad_types: [sample]
+      - label: Loop mode
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 88
+        default: 0
+        parameter: loop-mode
+        scope: selected
+        pad_types: [sample]
+      - label: Crossfade
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 89
+        default: 0
+        parameter: loop-crossfade
+        scope: selected
+        pad_types: [sample]
+      - label: LFO wave
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 91
+        default: 0
+        parameter: lfo-wave
+        scope: selected
+        pad_types: [sample]
+      - label: LFO sync
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 92
+        default: 0
+        parameter: lfo-sync
+        scope: selected
+        format: on-off
+        pad_types: [sample]
+      - label: Retrigger
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 93
+        default: 0
+        parameter: lfo-retrigger
+        scope: selected
+        format: on-off
+        pad_types: [sample]
+      - label: --
+        type: unbound
+
+  - id: pad-granular
+    label: Granular
+    category: PAD
+    encoders:
+      - label: Density
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 79
+        default: 0
+        parameter: density
+        scope: selected
+        pad_types: [granular]
+      - label: Grain size
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 80
+        default: 0
+        parameter: grain-size
+        scope: selected
+        pad_types: [granular]
+      - label: Window
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 81
+        default: 0
+        parameter: window
+        scope: selected
+        pad_types: [granular]
+      - label: Scatter
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 82
+        default: 0
+        parameter: scatter
+        scope: selected
+        pad_types: [granular]
+      - label: Pan random
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 83
+        default: 0
+        parameter: pan-random
+        scope: selected
+        pad_types: [granular]
+      - label: Reverse
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 86
+        default: 0
+        parameter: reverse
+        scope: selected
+        format: on-off
+        pad_types: [granular]
+      - label: Sustain
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 87
+        default: 0
+        parameter: sustain
+        scope: selected
+        pad_types: [granular]
+      - label: Crossfade
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 89
+        default: 0
+        parameter: loop-crossfade
+        scope: selected
+        pad_types: [granular]
+
+  - id: pad-clip
+    label: Clip
+    category: PAD
+    encoders:
+      - label: Live Flip
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 117
+        default: 0
+        parameter: live-flip
+        scope: selected
+        pad_types: [clip]
+      - label: Jungle
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 115
+        default: 0
+        parameter: jungle-cycle
+        scope: selected
+        pad_types: [clip]
+      - label: Tempo
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 114
+        default: 0
+        parameter: manual-tempo
+        scope: selected
+        pad_types: [clip]
+      - label: Scratch
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 78
+        default: 0
+        parameter: baby-scratch
+        scope: selected
+        format: on-off
+        pad_types: [clip]
+      - label: Brake
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 102
+        default: 0
+        parameter: brake
+        scope: selected
+        format: on-off
+        pad_types: [clip]
+      - label: Freeze
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 104
+        default: 0
+        parameter: freeze
+        scope: selected
+        format: on-off
+        pad_types: [clip]
+      - label: Pull up
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 105
+        default: 0
+        parameter: pull-up
+        scope: selected
+        format: on-off
+        pad_types: [clip]
+      - label: Power
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 107
+        default: 0
+        parameter: power-down
+        scope: selected
+        format: on-off
+        pad_types: [clip]
+
+  - id: pad-slicer
+    label: Slicer
+    category: PAD
+    encoders:
+      - label: Play through
+        type: midi_cc
+        port: bitbox
+        channel: 1
+        cc: 90
+        default: 0
+        parameter: play-through
+        scope: selected
+        format: on-off
+        pad_types: [slicer]
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+      - label: --
+        type: unbound
+
