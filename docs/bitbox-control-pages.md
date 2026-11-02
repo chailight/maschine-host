@@ -6,7 +6,7 @@
 cargo run -- --config docs/example-config.yaml
 ```
 
-Groups A–H stay the playable instruments, on MIDI channels 1–8, notes 36–51. Changing a control category does not change the group. The Pad Mode button is not the PAD category and does not edit the velocity curve or note scale.
+Groups A–H stay the playable instruments, on MIDI channels 1–8, notes 36–51. Changing a control category does not change the group. The Pad Mode button is not the PAD category. It toggles a setup screen titled PAD MODE for the selected group's velocity curve, scale, root note, octave, and pad type. A press by itself does not change those values. Encoders 1–5 do, one step every twenty clicks, and the values are kept only until the host restarts. The scale list is the western modes on every group. Octave applies to every group. An omitted pad type is sample.
 
 The eight buttons above the displays select, from left to right: PERFORM, MIX, DELAY, REVERB, CHAR, DYNAM, EQ, PAD. One is lit. Left and Right move inside the current category and remember the last page of each category. The Right lamp is on when that category has a later page, and the Left lamp is on when it has an earlier page. A category with one page lights neither arrow. Each column of the LCD shows that button's category name.
 
@@ -27,7 +27,7 @@ The community patch already answers its own controllers. These extra numbers are
 | Slot pan | 38 | that slot, 1–8 |
 | Slot pitch | 39 | that slot, 1–8 |
 
-PERFORM encoders 1–4 are the selected slot's delay send (84), reverb send (85), then feedback (30) and time (31). Encoders 5–8 follow the group's `pad_type`. The example groups have no pad type, so those four encoders stay inactive. Set `pad_type` to `sample`, `granular`, `clip`, or `slicer` on a group to enable them. Granular uses density, grain size, window, and scatter (79–82). Those pad-type controllers belong to the firmware. A preset does not learn them.
+PERFORM encoders 1–4 are the selected slot's delay send (84), reverb send (85), then feedback (30) and time (31). Encoders 5–8 follow the group's `pad_type`. An omitted type loads as sample, so those encoders start as reverse, sustain, loop mode, and loop crossfade. Set `pad_type` to `granular`, `clip`, or `slicer` on a group for the other lists, or choose `none` on the Pad Mode screen to turn them off. Granular uses density, grain size, window, and scatter (79–82). Those pad-type controllers belong to the firmware. A preset does not learn them.
 
 ## Preset template
 

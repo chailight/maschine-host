@@ -1,8 +1,9 @@
 use crate::model::{
     clamp_note, ButtonGesture, ConnectionStatus, ControlAction, ControlId, Destination,
     EncoderKind, EncoderMapping, GroupId, HeldNote, HostConfig, InputEvent, LogLevel, MidiMessage,
-    OutputAction, PadMode, ParamScope, ParameterState, RadioSet, SamplerCommand, SamplerCommandKind,
-    SilkButton, TriggerPolicy, ValueFormat, ENCODER_COUNT, PAD_COUNT, SILK_BUTTON_COUNT,
+    NoteScale, OutputAction, PadMode, PadType, ParamScope, ParameterState, RadioSet, SamplerCommand,
+    SamplerCommandKind, ScaleName, SilkButton, TriggerPolicy, ValueFormat, VelocityCurve,
+    ENCODER_COUNT, PAD_COUNT, SILK_BUTTON_COUNT,
 };
 use crate::sampler::select_zone;
 use std::collections::BTreeMap;
@@ -22,6 +23,7 @@ pub struct Controller {
     pub(crate) active_group: GroupId,
     pub(crate) active_page: usize,
     pub(crate) octave: [i32; 8],
+    setup_accum: [i32; ENCODER_COUNT],
     pub(crate) parameters: BTreeMap<(usize, u8), ParameterState>,
     pub(crate) shared: BTreeMap<(String, u8), ParameterState>,
     pub(crate) category_page: Vec<usize>,
@@ -90,6 +92,7 @@ impl Controller {
             active_group: GroupId::A,
             active_page,
             octave: [0; 8],
+            setup_accum: [0; ENCODER_COUNT],
             parameters,
             shared,
             category_page,
@@ -138,6 +141,37 @@ impl Controller {
 
     pub fn octave(&self, group: GroupId) -> i32 {
         self.octave[group.index()]
+    }
+
+    pub fn setup_screen(&self) -> bool {
+        self.button_on[SilkButton::PadMode.index()]
+    }
+
+    pub fn setup_columns(&self) -> [String; 5] {
+        let group = &self.config.groups[self.active_group.index()];
+        let scale = group
+            .note_scale
+            .map(|scale| scale.name.screen_label())
+            .unwrap_or("notes");
+        let root = group.note_scale.map(|scale| scale.root).unwrap_or(group.root);
+        let offset = self.octave[group.id.index()];
+        let octave = if offset == 0 {
+            "0".to_string()
+        } else {
+            format!("{offset:+}")
+        };
+        let pad_type = group
+            .pad_type
+            .map(PadType::name)
+            .unwrap_or("none")
+            .to_string();
+        [
+            format_curve(group.velocity_curve.get()),
+            scale.to_string(),
+            note_name(root),
+            octave,
+            pad_type,
+        ]
     }
 
     pub fn parameter(&self, page: usize, encoder: u8) -> Option<&ParameterState> {
@@ -234,8 +268,20 @@ impl Controller {
             ControlId::Encoder(index) if event.action == ControlAction::Delta => {
                 self.encoder(index, event.value, event.time_ms)
             }
-            ControlId::PageLeft if event.action == ControlAction::Press => self.shift_page(-1),
-            ControlId::PageRight if event.action == ControlAction::Press => self.shift_page(1),
+            ControlId::PageLeft if event.action == ControlAction::Press => {
+                if self.setup_screen() {
+                    Vec::new()
+                } else {
+                    self.shift_page(-1)
+                }
+            }
+            ControlId::PageRight if event.action == ControlAction::Press => {
+                if self.setup_screen() {
+                    Vec::new()
+                } else {
+                    self.shift_page(1)
+                }
+            }
             ControlId::Panic if event.action == ControlAction::Press => self.panic(),
             ControlId::OctaveUp if event.action == ControlAction::Press => self.shift_octave(1),
             ControlId::OctaveDown if event.action == ControlAction::Press => self.shift_octave(-1),
@@ -366,7 +412,7 @@ impl Controller {
                 return self.toggle_clip_layer();
             }
             if matches!(button, SilkButton::DisplayLeft | SilkButton::DisplayRight) {
-                if action == ControlAction::Press {
+                if action == ControlAction::Press && !self.setup_screen() {
                     let delta = if button == SilkButton::DisplayLeft { -1 } else { 1 };
                     return self.shift_page(delta);
                 }
@@ -386,7 +432,15 @@ impl Controller {
             },
             ButtonGesture::Toggle => {
                 if action == ControlAction::Press {
-                    self.set_button(button, !self.button_on[button.index()])
+                    let on = !self.button_on[button.index()];
+                    let changed = self.set_button(button, on);
+                    if button == SilkButton::PadMode {
+                        self.setup_accum = [0; ENCODER_COUNT];
+                        if !on {
+                            self.retarget_pad_page();
+                        }
+                    }
+                    changed
                 } else {
                     false
                 }
@@ -402,7 +456,7 @@ impl Controller {
         if changed {
             self.feedback_dirty = true;
         }
-        if action == ControlAction::Press {
+        if action == ControlAction::Press && !self.setup_screen() {
             match button {
                 SilkButton::DisplayLeft => return self.shift_page(-1),
                 SilkButton::DisplayRight => return self.shift_page(1),
@@ -446,12 +500,19 @@ impl Controller {
         let page = self.active_page;
         let release = self.release_clip_hold();
         self.active_group = id;
+        self.setup_accum = [0; ENCODER_COUNT];
+        self.retarget_pad_page();
         self.feedback_dirty = true;
         self.log(
             LogLevel::Info,
             format!("group {id} selected; encoder page unchanged"),
         );
-        debug_assert_eq!(self.active_page, page);
+        if self.active_page != page {
+            let category = self
+                .category_of(self.active_page)
+                .expect("pad retarget stays inside a category");
+            debug_assert_eq!(self.config.categories[category].id, "PAD");
+        }
         release
     }
 
@@ -468,7 +529,13 @@ impl Controller {
             )];
         }
         if let Some(category) = self.category_of(self.active_page) {
-            let pages = self.config.categories[category].pages.clone();
+            if self.config.categories[category].id == "PAD" {
+                self.retarget_pad_page();
+            }
+            let pages = self.pages_in(category);
+            if pages.is_empty() {
+                return Vec::new();
+            }
             let position = pages
                 .iter()
                 .position(|page| *page == self.active_page)
@@ -493,11 +560,6 @@ impl Controller {
             )];
         }
         let group = self.active_group;
-        if self.config.groups[group.index()].mode == PadMode::OneShot {
-            return vec![OutputAction::Error(
-                "octave shift does not apply to one-shot groups".to_string(),
-            )];
-        }
         self.octave[group.index()] = (self.octave[group.index()] + delta).clamp(-4, 4);
         self.feedback_dirty = true;
         Vec::new()
@@ -668,18 +730,12 @@ impl Controller {
     }
 
     fn mapped_note(&self, group: &crate::model::Group, pad: u8) -> u8 {
-        let base = match (group.mode, group.note_scale) {
-            (PadMode::Scale, Some(scale)) => {
-                i32::from(scale.root) + scale.name.interval(pad)
-            }
-            _ => i32::from(group.notes[pad as usize]),
-        };
-        let shift = if group.mode == PadMode::OneShot {
-            0
+        let base = if let Some(scale) = group.note_scale {
+            i32::from(scale.root) + scale.name.interval(pad)
         } else {
-            self.octave[group.id.index()] * 12
+            i32::from(group.notes[pad as usize])
         };
-        clamp_note(base + shift)
+        clamp_note(base + self.octave[group.id.index()] * 12)
     }
 
     fn encoder(&mut self, index: u8, delta: i32, time_ms: u64) -> Vec<OutputAction> {
@@ -692,6 +748,10 @@ impl Controller {
             return vec![OutputAction::Error(format!(
                 "encoder {index} is outside 0-7"
             ))];
+        }
+        if self.setup_screen() {
+            self.edit_setup(index, delta);
+            return Vec::new();
         }
         let page_index = self.active_page;
         let mapping = self.resolved_mapping(page_index, index as usize);
@@ -1196,6 +1256,159 @@ impl Controller {
             .position(|category| category.pages.contains(&page))
     }
 
+    fn pages_in(&self, category: usize) -> Vec<usize> {
+        if self.config.categories[category].id == "PAD" {
+            self.pad_pages(category)
+        } else {
+            self.config.categories[category].pages.clone()
+        }
+    }
+
+    fn pad_pages(&self, category: usize) -> Vec<usize> {
+        let Some(pad_type) = self.config.groups[self.active_group.index()].pad_type else {
+            return Vec::new();
+        };
+        self.config.categories[category]
+            .pages
+            .iter()
+            .copied()
+            .filter(|page| {
+                self.config.encoder_pages[*page]
+                    .encoders
+                    .iter()
+                    .any(|encoder| encoder.pad_types.contains(&pad_type))
+            })
+            .collect()
+    }
+
+    fn retarget_pad_page(&mut self) {
+        let Some(category) = self.category_of(self.active_page) else {
+            return;
+        };
+        if self.config.categories[category].id != "PAD" {
+            return;
+        }
+        let visible = self.pad_pages(category);
+        if visible.is_empty() || visible.contains(&self.active_page) {
+            self.update_page_arrows();
+            return;
+        }
+        let page = visible[0];
+        self.active_page = page;
+        if category < self.category_page.len() {
+            self.category_page[category] = page;
+        }
+        self.update_page_arrows();
+    }
+
+    fn edit_setup(&mut self, index: u8, delta: i32) {
+        if delta == 0 || index >= 5 {
+            self.feedback_dirty = true;
+            return;
+        }
+        let slot = index as usize;
+        self.setup_accum[slot] += delta;
+        let steps = self.setup_accum[slot] / SETUP_DETENTS;
+        if steps == 0 {
+            self.feedback_dirty = true;
+            return;
+        }
+        self.setup_accum[slot] -= steps * SETUP_DETENTS;
+        let group_index = self.active_group.index();
+        match index {
+            0 => self.step_velocity(group_index, steps),
+            1 => self.step_scale(group_index, steps),
+            2 => self.step_root(group_index, steps),
+            3 => self.step_setup_octave(group_index, steps),
+            4 => self.step_pad_type(group_index, steps),
+            _ => {}
+        }
+        self.feedback_dirty = true;
+    }
+
+    fn step_velocity(&mut self, group_index: usize, steps: i32) {
+        const STEPS: [f64; 3] = [0.5, 1.0, 2.0];
+        let current = self.config.groups[group_index].velocity_curve.get();
+        let last = (STEPS.len() - 1) as i32;
+        let index = match STEPS
+            .iter()
+            .position(|step| (step - current).abs() < 1e-9)
+        {
+            None => {
+                if steps > 0 {
+                    steps - 1
+                } else {
+                    steps + 1
+                }
+            }
+            Some(index) => index as i32 + steps,
+        };
+        let next = STEPS[index.clamp(0, last) as usize];
+        self.config.groups[group_index].velocity_curve = VelocityCurve::new(next).expect("step");
+    }
+
+    fn step_scale(&mut self, group_index: usize, steps: i32) {
+        const NAMES: [Option<ScaleName>; 11] = [
+            None,
+            Some(ScaleName::Major),
+            Some(ScaleName::Dorian),
+            Some(ScaleName::Phrygian),
+            Some(ScaleName::Lydian),
+            Some(ScaleName::Mixolydian),
+            Some(ScaleName::NaturalMinor),
+            Some(ScaleName::Locrian),
+            Some(ScaleName::MajorPentatonic),
+            Some(ScaleName::MinorPentatonic),
+            Some(ScaleName::Chromatic),
+        ];
+        let current = self.config.groups[group_index]
+            .note_scale
+            .map(|scale| scale.name);
+        let index = NAMES
+            .iter()
+            .position(|name| *name == current)
+            .unwrap_or(0);
+        let next = NAMES[wrap_index(index, NAMES.len(), steps)];
+        let root = self.config.groups[group_index]
+            .note_scale
+            .map(|scale| scale.root)
+            .unwrap_or(self.config.groups[group_index].root);
+        self.config.groups[group_index].root = root;
+        self.config.groups[group_index].note_scale = next.map(|name| NoteScale { root, name });
+    }
+
+    fn step_root(&mut self, group_index: usize, steps: i32) {
+        let current = self.config.groups[group_index]
+            .note_scale
+            .map(|scale| scale.root)
+            .unwrap_or(self.config.groups[group_index].root);
+        let root = (i32::from(current) + steps).clamp(0, 127) as u8;
+        self.config.groups[group_index].root = root;
+        if let Some(scale) = self.config.groups[group_index].note_scale.as_mut() {
+            scale.root = root;
+        }
+    }
+
+    fn step_setup_octave(&mut self, group_index: usize, steps: i32) {
+        self.octave[group_index] = (self.octave[group_index] + steps).clamp(-4, 4);
+    }
+
+    fn step_pad_type(&mut self, group_index: usize, steps: i32) {
+        const TYPES: [Option<PadType>; 5] = [
+            None,
+            Some(PadType::Sample),
+            Some(PadType::Granular),
+            Some(PadType::Clip),
+            Some(PadType::Slicer),
+        ];
+        let current = self.config.groups[group_index].pad_type;
+        let index = TYPES
+            .iter()
+            .position(|pad_type| *pad_type == current)
+            .unwrap_or(1);
+        self.config.groups[group_index].pad_type = TYPES[wrap_index(index, TYPES.len(), steps)];
+    }
+
     fn show_page(&mut self, page: usize, category: usize) -> Vec<OutputAction> {
         let release = if page == self.active_page {
             Vec::new()
@@ -1222,13 +1435,17 @@ impl Controller {
         }
         let (left, right) = match self.category_of(self.active_page) {
             Some(category) => {
-                let pages = &self.config.categories[category].pages;
-                let position = pages
-                    .iter()
-                    .position(|page| *page == self.active_page)
-                    .unwrap_or(0);
-                let last = pages.len().saturating_sub(1);
-                (position > 0, position < last)
+                let pages = self.pages_in(category);
+                if pages.len() < 2 {
+                    (false, false)
+                } else {
+                    let position = pages
+                        .iter()
+                        .position(|page| *page == self.active_page)
+                        .unwrap_or(0);
+                    let last = pages.len() - 1;
+                    (position > 0, position < last)
+                }
             }
             None => (false, false),
         };
@@ -1242,9 +1459,22 @@ impl Controller {
                 "category change ignored while the controller is disconnected".to_string(),
             )];
         }
-        let Some(page) = self.category_page.get(category).copied() else {
+        let Some(mut page) = self.category_page.get(category).copied() else {
             return Vec::new();
         };
+        if self.config.categories[category].id == "PAD" {
+            let visible = self.pad_pages(category);
+            if let Some(matched) = visible
+                .iter()
+                .copied()
+                .find(|candidate| *candidate == page)
+                .or_else(|| visible.first().copied())
+            {
+                page = matched;
+            } else if let Some(first) = self.config.categories[category].pages.first().copied() {
+                page = first;
+            }
+        }
         for index in 0..8 {
             self.button_on[index] = index == category;
         }
@@ -1554,6 +1784,31 @@ pub fn character_help_row(
     )
 }
 
+const SETUP_DETENTS: i32 = 20;
+
+fn wrap_index(index: usize, len: usize, steps: i32) -> usize {
+    (index as i32 + steps).rem_euclid(len as i32) as usize
+}
+
+fn note_name(note: u8) -> String {
+    const NAMES: [&str; 12] = [
+        "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B",
+    ];
+    let octave = i32::from(note) / 12 - 1;
+    format!("{}{octave}", NAMES[note as usize % 12])
+}
+
+fn format_curve(value: f64) -> String {
+    if (value - value.round()).abs() < 1e-9 {
+        return format!("{}", value.round() as i32);
+    }
+    let mut text = format!("{value:.2}");
+    while text.contains('.') && text.ends_with('0') {
+        text.pop();
+    }
+    text
+}
+
 fn abbreviate_label(label: &str) -> String {
     label
         .split(' ')
@@ -1600,7 +1855,7 @@ mod tests {
                 "H" => (
                     "one_shot",
                     "\n    destination: {type: sampler, instrument: clicks}\n    samples:\n",
-                    8,
+                    20,
                 ),
                 _ => ("one_shot", "", (index as u8) + 1),
             };
@@ -2093,8 +2348,8 @@ mod tests {
         ));
         let shared = host.handle(InputEvent::delta(ControlId::Encoder(0), 1, 11));
         assert_eq!(midi_bytes(&shared), vec![[0xB0, 84, 6]]);
-        let silent = host.handle(InputEvent::delta(ControlId::Encoder(4), 3, 12));
-        assert!(midi_bytes(&silent).is_empty());
+        let sample = host.handle(InputEvent::delta(ControlId::Encoder(4), 3, 12));
+        assert_eq!(midi_bytes(&sample), vec![[0xB0, 86, 3]]);
         let on = host.handle(InputEvent::press(ControlId::Pad(0), 80, 13));
         assert!(on.iter().any(|action| matches!(action, OutputAction::Midi(_))));
         host.handle(InputEvent::press(
@@ -2462,6 +2717,371 @@ mod tests {
         ));
         assert!(lit(&host, SilkButton::DisplayLeft));
         assert!(!lit(&host, SilkButton::DisplayRight));
+    }
+
+    #[test]
+    fn pad_mode_screen_edits_the_selected_group_and_filters_the_pages() {
+        let config = load_yaml(include_str!("../docs/example-config.yaml")).expect("bitbox");
+        let mut host = Controller::new(config);
+        let perform = host.active_page();
+        host.handle(InputEvent::press(ControlId::Group(GroupId::C), 1, 1));
+        let curve = host.config.groups[GroupId::C.index()].velocity_curve;
+        let scale = host.config.groups[GroupId::C.index()].note_scale;
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            2,
+        ));
+        assert!(host.setup_screen());
+        assert!(!host.clip_layer);
+        assert_eq!(host.active_page(), perform);
+        assert_eq!(host.config.groups[GroupId::C.index()].velocity_curve, curve);
+        assert_eq!(host.config.groups[GroupId::C.index()].note_scale, scale);
+        assert_eq!(
+            host.setup_columns(),
+            [
+                "0.5".to_string(),
+                "aeolian".to_string(),
+                "C3".to_string(),
+                "0".to_string(),
+                "sample".to_string()
+            ]
+        );
+        let shown = crate::feedback::render(&host);
+        assert!(shown.leds.buttons[SilkButton::PadMode.index()]);
+        assert!(shown.screens[1].ink_count() > 0);
+        assert!(shown.left_text.contains("PAD MODE"));
+        assert!(shown.left_text.contains("Scale map"));
+        assert!(shown.left_text.contains("aeolian"));
+        assert!(shown.screens[0].ink_count() > 0);
+
+        host.handle(InputEvent::press(ControlId::Group(GroupId::A), 1, 3));
+        assert!(host.setup_screen());
+        assert_eq!(host.active_page(), perform);
+        assert_eq!(host.setup_columns()[1], "notes");
+        assert_eq!(host.setup_columns()[2], "C2");
+        assert_eq!(host.setup_columns()[3], "0");
+        assert_eq!(host.setup_columns()[4], "sample");
+
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::Scene),
+            1,
+            4,
+        ));
+        let lamps = crate::feedback::render(&host);
+        assert!(lamps.leds.buttons[SilkButton::PadMode.index()]);
+        assert!(lamps.leds.buttons[SilkButton::Scene.index()]);
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::Pattern),
+            1,
+            5,
+        ));
+        let lamps = crate::feedback::render(&host);
+        assert!(lamps.leds.buttons[SilkButton::PadMode.index()]);
+        assert!(!lamps.leds.buttons[SilkButton::Scene.index()]);
+        assert!(lamps.leds.buttons[SilkButton::Pattern.index()]);
+
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            6,
+        ));
+        assert!(!host.setup_screen());
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::Display2),
+            1,
+            7,
+        ));
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::DisplayRight),
+            1,
+            8,
+        ));
+        let mix_page = host.active_page();
+        let arrows = crate::feedback::render(&host);
+        assert!(arrows.leds.buttons[SilkButton::DisplayLeft.index()]);
+        assert!(arrows.leds.buttons[SilkButton::DisplayRight.index()]);
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            9,
+        ));
+        assert!(host.setup_screen());
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::DisplayRight),
+            1,
+            10,
+        ));
+        assert_eq!(host.active_page(), mix_page);
+        let held = crate::feedback::render(&host);
+        assert!(held.leds.buttons[SilkButton::DisplayLeft.index()]);
+        assert!(held.leds.buttons[SilkButton::DisplayRight.index()]);
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            11,
+        ));
+        assert!(!host.setup_screen());
+        assert_eq!(host.active_page(), mix_page);
+        let restored = crate::feedback::render(&host);
+        assert!(restored.screens[1].ink_count() > 0);
+        assert!(!restored.leds.buttons[SilkButton::PadMode.index()]);
+
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::Display1),
+            1,
+            10,
+        ));
+        host.config.groups[GroupId::A.index()].velocity_curve =
+            VelocityCurve::new(0.75).unwrap();
+        host.handle(InputEvent::press(ControlId::Group(GroupId::A), 1, 11));
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            12,
+        ));
+        host.handle(InputEvent::delta(ControlId::Encoder(0), 1, 13));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].velocity_curve,
+            VelocityCurve::new(0.75).unwrap()
+        );
+        host.handle(InputEvent::delta(ControlId::Encoder(0), 19, 14));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].velocity_curve,
+            VelocityCurve::new(0.5).unwrap()
+        );
+        host.handle(InputEvent::delta(ControlId::Encoder(0), -20, 140));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].velocity_curve,
+            VelocityCurve::new(0.5).unwrap()
+        );
+        host.handle(InputEvent::delta(ControlId::Encoder(0), 20, 141));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].velocity_curve,
+            VelocityCurve::new(1.0).unwrap()
+        );
+        host.handle(InputEvent::delta(ControlId::Encoder(0), 20, 142));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].velocity_curve,
+            VelocityCurve::new(2.0).unwrap()
+        );
+        host.handle(InputEvent::delta(ControlId::Encoder(0), 20, 143));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].velocity_curve,
+            VelocityCurve::new(2.0).unwrap()
+        );
+        host.handle(InputEvent::delta(ControlId::Encoder(0), -20, 16));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].velocity_curve,
+            VelocityCurve::new(1.0).unwrap()
+        );
+        let straight = host.handle(InputEvent::press(ControlId::Pad(0), 16, 15));
+        assert_eq!(midi_bytes(&straight), vec![[0x90, 36, 16]]);
+        host.handle(InputEvent::release(ControlId::Pad(0), 16));
+
+        host.handle(InputEvent::press(ControlId::Group(GroupId::C), 1, 17));
+        host.config.groups[GroupId::C.index()].note_scale = None;
+        host.handle(InputEvent::delta(ControlId::Encoder(1), 1, 18));
+        assert!(host.config.groups[GroupId::C.index()].note_scale.is_none());
+        let names = [
+            Some(ScaleName::Major),
+            Some(ScaleName::Dorian),
+            Some(ScaleName::Phrygian),
+            Some(ScaleName::Lydian),
+            Some(ScaleName::Mixolydian),
+            Some(ScaleName::NaturalMinor),
+            Some(ScaleName::Locrian),
+            Some(ScaleName::MajorPentatonic),
+            Some(ScaleName::MinorPentatonic),
+            Some(ScaleName::Chromatic),
+            None,
+        ];
+        for (step, expected) in names.into_iter().enumerate() {
+            host.handle(InputEvent::delta(
+                ControlId::Encoder(1),
+                20,
+                19 + step as u64,
+            ));
+            assert_eq!(
+                host.config.groups[GroupId::C.index()]
+                    .note_scale
+                    .map(|scale| scale.name),
+                expected
+            );
+        }
+        host.handle(InputEvent::delta(ControlId::Encoder(1), 20, 30));
+        assert_eq!(
+            host.config.groups[GroupId::C.index()].note_scale,
+            Some(NoteScale {
+                root: 48,
+                name: ScaleName::Major,
+            })
+        );
+        let rooted = host.handle(InputEvent::press(ControlId::Pad(0), 127, 31));
+        assert_eq!(midi_bytes(&rooted), vec![[0x92, 48, 127]]);
+        host.handle(InputEvent::release(ControlId::Pad(0), 32));
+
+        host.handle(InputEvent::press(ControlId::Group(GroupId::A), 1, 33));
+        host.handle(InputEvent::delta(ControlId::Encoder(1), 1, 34));
+        assert!(host.config.groups[GroupId::A.index()].note_scale.is_none());
+        host.handle(InputEvent::delta(ControlId::Encoder(1), 20, 35));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].note_scale,
+            Some(NoteScale {
+                root: 36,
+                name: ScaleName::Major,
+            })
+        );
+        let drum = host.handle(InputEvent::press(ControlId::Pad(0), 100, 36));
+        assert_eq!(midi_bytes(&drum), vec![[0x90, 36, 100]]);
+        host.handle(InputEvent::release(ControlId::Pad(0), 37));
+        let second = host.handle(InputEvent::press(ControlId::Pad(1), 100, 38));
+        assert_eq!(midi_bytes(&second), vec![[0x90, 38, 100]]);
+        host.handle(InputEvent::release(ControlId::Pad(1), 39));
+        host.handle(InputEvent::delta(ControlId::Encoder(3), 20, 40));
+        let raised = host.handle(InputEvent::press(ControlId::Pad(0), 100, 41));
+        assert_eq!(midi_bytes(&raised), vec![[0x90, 48, 100]]);
+        host.handle(InputEvent::release(ControlId::Pad(0), 42));
+        host.handle(InputEvent::press(ControlId::Group(GroupId::B), 1, 43));
+        host.handle(InputEvent::delta(ControlId::Encoder(1), 1, 44));
+        assert!(host.config.groups[GroupId::B.index()].note_scale.is_none());
+        host.handle(InputEvent::delta(ControlId::Encoder(1), 20, 45));
+        let chromatic = host.handle(InputEvent::press(ControlId::Pad(0), 127, 46));
+        assert_eq!(midi_bytes(&chromatic), vec![[0x91, 36, 127]]);
+        host.handle(InputEvent::release(ControlId::Pad(0), 47));
+        let degree = host.handle(InputEvent::press(ControlId::Pad(1), 127, 48));
+        assert_eq!(midi_bytes(&degree), vec![[0x91, 38, 127]]);
+        host.handle(InputEvent::release(ControlId::Pad(1), 49));
+
+        host.handle(InputEvent::press(ControlId::Group(GroupId::C), 1, 50));
+        host.config.groups[GroupId::C.index()].note_scale = Some(NoteScale {
+            root: 48,
+            name: ScaleName::NaturalMinor,
+        });
+        host.octave[GroupId::C.index()] = 0;
+        host.handle(InputEvent::delta(ControlId::Encoder(2), 1, 51));
+        assert_eq!(host.config.groups[GroupId::C.index()].note_scale.unwrap().root, 48);
+        host.handle(InputEvent::delta(ControlId::Encoder(2), 20, 52));
+        assert_eq!(host.config.groups[GroupId::C.index()].note_scale.unwrap().root, 49);
+        assert_eq!(host.setup_columns()[2], "C#3");
+        let moved = host.handle(InputEvent::press(ControlId::Pad(0), 127, 53));
+        assert_eq!(midi_bytes(&moved), vec![[0x92, 49, 127]]);
+        host.handle(InputEvent::release(ControlId::Pad(0), 54));
+        host.config.groups[GroupId::C.index()].note_scale.as_mut().unwrap().root = 48;
+        host.config.groups[GroupId::C.index()].root = 48;
+        host.handle(InputEvent::delta(ControlId::Encoder(3), 1, 55));
+        assert_eq!(host.octave(GroupId::C), 0);
+        host.handle(InputEvent::delta(ControlId::Encoder(3), 20, 56));
+        assert_eq!(host.octave(GroupId::C), 1);
+        assert_eq!(host.setup_columns()[3], "+1");
+        let shifted = host.handle(InputEvent::press(ControlId::Pad(0), 127, 57));
+        assert_eq!(midi_bytes(&shifted), vec![[0x92, 60, 127]]);
+        host.handle(InputEvent::release(ControlId::Pad(0), 58));
+
+        host.handle(InputEvent::press(ControlId::Group(GroupId::A), 1, 59));
+        let types = [
+            Some(PadType::Granular),
+            Some(PadType::Clip),
+            Some(PadType::Slicer),
+            None,
+            Some(PadType::Sample),
+        ];
+        for (step, expected) in types.into_iter().enumerate() {
+            let stored = host.parameter(perform, 4).map(|state| state.value);
+            let silent = host.handle(InputEvent::delta(
+                ControlId::Encoder(4),
+                20,
+                60 + step as u64,
+            ));
+            assert!(midi_bytes(&silent).is_empty());
+            let untouched = host.handle(InputEvent::delta(
+                ControlId::Encoder(5),
+                20,
+                70 + step as u64,
+            ));
+            assert!(midi_bytes(&untouched).is_empty());
+            assert_eq!(host.parameter(perform, 4).map(|state| state.value), stored);
+            assert_eq!(host.config.groups[GroupId::A.index()].pad_type, expected);
+        }
+        host.handle(InputEvent::press(ControlId::Group(GroupId::B), 1, 71));
+        host.handle(InputEvent::press(ControlId::Group(GroupId::A), 1, 72));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].pad_type,
+            Some(PadType::Sample)
+        );
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            73,
+        ));
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::Display1),
+            1,
+            74,
+        ));
+        assert_eq!(
+            [
+                host.encoder_text(host.active_page(), 4).0,
+                host.encoder_text(host.active_page(), 5).0,
+                host.encoder_text(host.active_page(), 6).0,
+                host.encoder_text(host.active_page(), 7).0,
+            ],
+            [
+                "Reverse".to_string(),
+                "Sustain".to_string(),
+                "Loop mode".to_string(),
+                "Crossfade".to_string()
+            ]
+        );
+
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            75,
+        ));
+        host.handle(InputEvent::delta(ControlId::Encoder(4), 20, 76));
+        assert_eq!(
+            host.config.groups[GroupId::A.index()].pad_type,
+            Some(PadType::Granular)
+        );
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            77,
+        ));
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::Display8),
+            1,
+            78,
+        ));
+        assert_eq!(
+            host.config.encoder_pages[host.active_page()].id,
+            "pad-granular"
+        );
+        assert_eq!(host.encoder_text(host.active_page(), 0).0, "Density");
+
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            79,
+        ));
+        for step in 0..3 {
+            host.handle(InputEvent::delta(ControlId::Encoder(4), 20, 80 + step));
+        }
+        assert!(host.config.groups[GroupId::A.index()].pad_type.is_none());
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::PadMode),
+            1,
+            84,
+        ));
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::Display8),
+            1,
+            85,
+        ));
+        let blocked = host.handle(InputEvent::delta(ControlId::Encoder(0), 1, 86));
+        assert!(midi_bytes(&blocked).is_empty());
+        assert_eq!(host.encoder_text(host.active_page(), 0).1, "N/A");
     }
 
     #[test]

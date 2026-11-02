@@ -159,7 +159,12 @@ impl VelocityCurve {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ScaleName {
     Major,
+    Dorian,
+    Phrygian,
+    Lydian,
+    Mixolydian,
     NaturalMinor,
+    Locrian,
     MajorPentatonic,
     MinorPentatonic,
     Chromatic,
@@ -168,8 +173,13 @@ pub enum ScaleName {
 impl ScaleName {
     pub fn parse(text: &str) -> Option<Self> {
         match text.trim() {
-            "major" => Some(Self::Major),
-            "natural-minor" => Some(Self::NaturalMinor),
+            "major" | "ionian" => Some(Self::Major),
+            "dorian" => Some(Self::Dorian),
+            "phrygian" => Some(Self::Phrygian),
+            "lydian" => Some(Self::Lydian),
+            "mixolydian" => Some(Self::Mixolydian),
+            "natural-minor" | "aeolian" => Some(Self::NaturalMinor),
+            "locrian" => Some(Self::Locrian),
             "major-pentatonic" => Some(Self::MajorPentatonic),
             "minor-pentatonic" => Some(Self::MinorPentatonic),
             "chromatic" => Some(Self::Chromatic),
@@ -177,10 +187,45 @@ impl ScaleName {
         }
     }
 
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Major => "major",
+            Self::Dorian => "dorian",
+            Self::Phrygian => "phrygian",
+            Self::Lydian => "lydian",
+            Self::Mixolydian => "mixolydian",
+            Self::NaturalMinor => "natural-minor",
+            Self::Locrian => "locrian",
+            Self::MajorPentatonic => "major-pentatonic",
+            Self::MinorPentatonic => "minor-pentatonic",
+            Self::Chromatic => "chromatic",
+        }
+    }
+
+    pub fn screen_label(self) -> &'static str {
+        match self {
+            Self::Major => "ionian",
+            Self::Dorian => "dorian",
+            Self::Phrygian => "phrygian",
+            Self::Lydian => "lydian",
+            Self::Mixolydian => "mixolydian",
+            Self::NaturalMinor => "aeolian",
+            Self::Locrian => "locrian",
+            Self::MajorPentatonic => "pent maj",
+            Self::MinorPentatonic => "pent min",
+            Self::Chromatic => "chromatic",
+        }
+    }
+
     fn steps(self) -> &'static [i32] {
         match self {
             Self::Major => &[0, 2, 4, 5, 7, 9, 11],
+            Self::Dorian => &[0, 2, 3, 5, 7, 9, 10],
+            Self::Phrygian => &[0, 1, 3, 5, 7, 8, 10],
+            Self::Lydian => &[0, 2, 4, 6, 7, 9, 11],
+            Self::Mixolydian => &[0, 2, 4, 5, 7, 9, 10],
             Self::NaturalMinor => &[0, 2, 3, 5, 7, 8, 10],
+            Self::Locrian => &[0, 1, 3, 5, 6, 8, 10],
             Self::MajorPentatonic => &[0, 2, 4, 7, 9],
             Self::MinorPentatonic => &[0, 3, 5, 7, 10],
             Self::Chromatic => &[],
@@ -219,6 +264,8 @@ pub struct Group {
     pub color: [u8; 3],
     pub velocity_curve: VelocityCurve,
     pub note_scale: Option<NoteScale>,
+    /// Scale root kept while the pads are on their note list.
+    pub root: u8,
     pub pad_type: Option<PadType>,
 }
 
@@ -399,7 +446,7 @@ pub enum ButtonGesture {
 /// Buttons that light one at a time.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RadioSet {
-    /// Scene, Pattern, Pad Mode, Navigate, Duplicate, Select, Solo, Mute.
+    /// Scene, Pattern, Navigate, Duplicate, Select, Solo, Mute.
     PadModes,
     /// Volume, Swing, Tempo, and Note Repeat.
     Perform,
@@ -566,9 +613,9 @@ impl SilkButton {
             | SilkButton::Swing
             | SilkButton::Tempo
             | SilkButton::NoteRepeat => ButtonGesture::Radio(RadioSet::Perform),
+            SilkButton::PadMode => ButtonGesture::Toggle,
             SilkButton::Scene
             | SilkButton::Pattern
-            | SilkButton::PadMode
             | SilkButton::Navigate
             | SilkButton::Duplicate
             | SilkButton::Select

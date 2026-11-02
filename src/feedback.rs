@@ -93,28 +93,49 @@ pub fn render(controller: &Controller) -> FeedbackFrame {
     } else {
         let group = &controller.config.groups[controller.active_group.index()];
         let page = &controller.config.encoder_pages[controller.active_page];
-        let octave = if group.mode == PadMode::OneShot {
-            String::new()
+        let (left, right) = if controller.setup_screen() {
+            let columns = controller.setup_columns();
+            (
+                format!(
+                    "PAD MODE\n{}  {}\n{}\n{}\n{}\n{}\n{}",
+                    group.id,
+                    group.label,
+                    columns[0],
+                    columns[1],
+                    columns[2],
+                    columns[3],
+                    columns[4]
+                ),
+                format!(
+                    "PAD MODE\n{}  {}\n{}",
+                    group.id, group.label, columns[4]
+                ),
+            )
         } else {
-            format!(" oct {:+}", controller.octave[group.id.index()])
-        };
-        let left = format!(
-            "GROUP {}  {}\n{}{octave}\n{}\ncommanded value is not device truth",
-            group.id,
-            group.label,
-            group.mode.label(),
-            group.destination.summary()
-        );
-        let mut right = format!("PAGE {}\n", page.label);
-        for index in 0..ENCODER_COUNT {
-            let encoder = &page.encoders[index];
-            let (label, shown, _) = controller.encoder_text(controller.active_page, index);
-            let suffix = match &encoder.kind {
-                EncoderKind::MidiCc { cc: None, .. } => "no cc",
-                _ => "cmd",
+            let octave = if group.mode == PadMode::OneShot {
+                String::new()
+            } else {
+                format!(" oct {:+}", controller.octave[group.id.index()])
             };
-            right.push_str(&format!("{} {label} {shown} {suffix}\n", index + 1));
-        }
+            let left = format!(
+                "GROUP {}  {}\n{}{octave}\n{}\ncommanded value is not device truth",
+                group.id,
+                group.label,
+                group.mode.label(),
+                group.destination.summary()
+            );
+            let mut right = format!("PAGE {}\n", page.label);
+            for index in 0..ENCODER_COUNT {
+                let encoder = &page.encoders[index];
+                let (label, shown, _) = controller.encoder_text(controller.active_page, index);
+                let suffix = match &encoder.kind {
+                    EncoderKind::MidiCc { cc: None, .. } => "no cc",
+                    _ => "cmd",
+                };
+                right.push_str(&format!("{} {label} {shown} {suffix}\n", index + 1));
+            }
+            (left, right)
+        };
         (left, right, leds_for(controller))
     };
     let mut screens = [MonoScreen::blank(), MonoScreen::blank()];
@@ -205,6 +226,10 @@ const VALUE_MARK: usize = 8;
 const UNIT_PITCH: usize = LABEL_Y - SCOPE_Y;
 
 fn draw_encoder_panels(screens: &mut [MonoScreen; SCREEN_COUNT], controller: &Controller) {
+    if controller.setup_screen() {
+        draw_setup_panels(screens, controller);
+        return;
+    }
     let page_index = controller.active_page;
     let page = &controller.config.encoder_pages[page_index];
     let names: Vec<&str> = controller
@@ -265,6 +290,29 @@ fn draw_encoder_panels(screens: &mut [MonoScreen; SCREEN_COUNT], controller: &Co
                     clip,
                 );
             }
+        }
+    }
+}
+
+fn draw_setup_panels(screens: &mut [MonoScreen; SCREEN_COUNT], controller: &Controller) {
+    let group = &controller.config.groups[controller.active_group.index()];
+    let columns = controller.setup_columns();
+    let labels = ["Vel", "Scale", "Root", "Oct", "Type"];
+    let heading = format!("{}  {}", group.id, group.label);
+    for screen_index in 0..SCREEN_COUNT {
+        let screen = &mut screens[screen_index];
+        draw_span(screen, 0, 0, "PAD MODE", None);
+        draw_span(screen, 0, 12, &heading, None);
+        let start = screen_index * COLUMN_COUNT;
+        for slot in 0..COLUMN_COUNT {
+            let index = start + slot;
+            if index >= labels.len() {
+                break;
+            }
+            let origin = slot * COLUMN_WIDTH;
+            let clip = Some((origin, origin + COLUMN_WIDTH));
+            draw_centered(screen, origin, SCOPE_Y, labels[index], clip);
+            draw_centered(screen, origin, 48, &columns[index], clip);
         }
     }
 }
@@ -506,6 +554,9 @@ fn glyph_rows(ch: char) -> [&'static str; 7] {
         ],
         '/' => [
             "    #", "    #", "   # ", "  #  ", " #   ", "#    ", "#    ",
+        ],
+        '#' => [
+            " # # ", " # # ", "#####", " # # ", "#####", " # # ", " # # ",
         ],
         ' ' => [
             "     ", "     ", "     ", "     ", "     ", "     ", "     ",

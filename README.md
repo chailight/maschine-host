@@ -26,6 +26,14 @@ Speed is in hertz and does not follow a tempo. Fully left is stopped, the middle
 
 The knob position on the first EQ page stays put. The host sends the moving value around it. Choosing None sends that stored value once so the module settles. This is not the Bitbox pad LFO.
 
+### Pad Mode screen
+
+Pad Mode toggles a setup screen titled PAD MODE for the selected group. Both displays show the group letter and name. The columns are velocity curve, scale, root note, octave, and pad type. Encoders 1–5 change those values for the session, and a value moves once every twenty encoder clicks. The curve steps through 0.5, 1, and 2 and stops at either end. The scale list is notes, then the western modes ionian, dorian, phrygian, lydian, mixolydian, aeolian, and locrian, then major pentatonic, minor pentatonic, and chromatic. It is offered on every group. The root is a note name, with C4 at MIDI note 60, and it is kept when the scale is set back to notes. Octave uses the existing offset on every group, including one-shot. An omitted pad type loads as sample. The type can also be granular, clip, slicer, or none. Sample is also the choice for a multisample cell. Leaving the screen returns to the current control page. PERFORM encoders 5–8 and the PAD pages then follow the chosen type. The choice is not written to the configuration file or to the Bitbox.
+
+## Later: matching presets
+
+Keep a local copy of each Bitbox preset. Loading a preset from the Maschine controller will send the program change that loads it on the module and will load the matching local `preset.xml`, so the host's pad types and the rest of the group layout match the preset that is playing. Until that library exists, pad type on the controller is set by hand. That choice shows or hides host controls and does not change the module or the preset file.
+
 ## Development with OpenSpec
 
 This repository contains an initial OpenSpec change proposal under `openspec/changes/maschine2-host-mvp/`. Install and initialize a compatible version of OpenSpec in the repository, then ask Codex or Cursor to review the proposal, design, specifications, and tasks before implementation. OpenSpec CLI conventions may vary by version; preserve the files if initialization offers to overwrite them.

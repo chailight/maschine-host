@@ -437,8 +437,9 @@ fn validate(raw: RawConfig) -> Result<HostConfig, Vec<ConfigIssue>> {
             color,
             velocity_curve,
             note_scale,
+            root: note_scale.map(|scale| scale.root).unwrap_or(notes[0]),
             pad_type: match &raw_group.pad_type {
-                None => None,
+                None => Some(PadType::Sample),
                 Some(name) => match PadType::parse(name) {
                     Some(pad_type) => Some(pad_type),
                     None => {
@@ -1158,6 +1159,8 @@ mod tests {
                 for group in &config.groups {
                     assert_eq!(group.notes.as_slice(), shared_notes.as_slice());
                     assert_eq!(group.velocity_curve, VelocityCurve::new(0.5).unwrap());
+                    assert_eq!(group.pad_type, Some(PadType::Sample));
+                    assert_eq!(group.root, if group.id == GroupId::C { 48 } else { 36 });
                     if group.id == GroupId::C {
                         assert_eq!(
                             group.note_scale,
