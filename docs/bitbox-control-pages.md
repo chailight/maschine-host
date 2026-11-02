@@ -27,7 +27,17 @@ The community patch already answers its own controllers. These extra numbers are
 | Slot pan | 38 | that slot, 1–8 |
 | Slot pitch | 39 | that slot, 1–8 |
 
-PERFORM encoders 1–4 are the selected slot's delay send (84), reverb send (85), then feedback (30) and time (31). Encoders 5–8 follow the group's `pad_type`. The example groups have no pad type, so those four encoders stay inactive. Set `pad_type` to `sample`, `granular`, `clip`, or `slicer` on a group to enable them. Granular uses density, grain size, window, and scatter (79–82).
+PERFORM encoders 1–4 are the selected slot's delay send (84), reverb send (85), then feedback (30) and time (31). Encoders 5–8 follow the group's `pad_type`. The example groups have no pad type, so those four encoders stay inactive. Set `pad_type` to `sample`, `granular`, `clip`, or `slicer` on a group to enable them. Granular uses density, grain size, window, and scatter (79–82). Those pad-type controllers belong to the firmware. A preset does not learn them.
+
+## Preset template
+
+`presets/host-template/preset.xml` already contains the learns in the table above, for all eight groups. `presets/TEST/preset.xml` is the copy saved on the module, with the learns proven on delay, reverb, and the Group B pad. Load the host template on the module and save it there once. The expanded file has not been through that save yet.
+
+The module writes a learn as `modsource src="midicc"`. In that attribute the channel counts from 0, so Group A is `0` and Group H is `7`. The pad's MIDI input counts from 1. On the grid, the first row is channels 1–4 and the second row is channels 5–8. The other pads have no channel and no learned controller.
+
+A learned controller moves upward from the value saved in the preset. Full travel is amount `1000`. Pan is saved full left, so 64 is the centre. Level, filter, pitch, delay feedback, both delay times, delay cutoff, and the three reverb parameters are saved at 0. Beat Sync is saved on. Controller 31 is learned to both the percentage time and the musical time, and controller 108 chooses which one is heard. Controller 111 is the firmware width control and is not learned.
+
+Preset Manager 1.0 drops the controller number and channel when it saves, and it replaces the delay and reverb cells. Save this preset on the module.
 
 ## Overrides
 

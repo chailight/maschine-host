@@ -1,6 +1,10 @@
 # Parameter Registry Specification
 
-## ADDED Requirements
+## Purpose
+
+Names each Bitbox control once, with its controller, channel, and display text, so every page shares the same commanded value.
+
+## Requirements
 
 ### Requirement: Typed parameter registry
 The system SHALL define each controllable parameter once, with an ID, label, source, scope, address, range, supported pad types, value semantics, and display format. Scope SHALL be global, selected-slot, or all-slot. Source SHALL be patch-fixed or stock-learn. Two pages that use the same parameter SHALL share one host-commanded value. The host SHALL address that value by the parameter and, for a slot scope, the slot. It SHALL NOT keep a separate value per page position.
@@ -37,7 +41,7 @@ The host proposes these controllers for parameters the patch does not number. Gl
 - 33 reverb decay, 34 reverb damping, and 35 reverb pre-delay.
 - 36 level, 37 filter, 38 pan, and 39 pitch, one controller shared by slots 1–8 on channels 1–8.
 
-Delay time is one controller. Beat-sync does not select a second time controller.
+Delay time is one controller. The module stores that controller on both of its time parameters, `delay` and `delaymustime`. Beat-sync, controller 108, selects which stored time is heard. It does not select a second controller. A learned controller is stored as `modsource src="midicc"` with `ccnum` and `mchan`. `mchan` counts from 0. The learn moves the parameter upward from the saved value, and amount 1000 is full travel. The preset that carries these learns for all eight slots is specified in configuration and testing. Controller 111 is not one of these learns.
 
 #### Scenario: Proposed feedback controller
 - **WHEN** the user turns the global delay-feedback encoder

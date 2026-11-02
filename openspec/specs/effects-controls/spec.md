@@ -1,6 +1,10 @@
 # Effects Controls Specification
 
-## ADDED Requirements
+## Purpose
+
+Names the delay, reverb, character, compressor, and EQ controls, including the labels that follow the selected mode.
+
+## Requirements
 
 ### Requirement: Global effects pages
 DELAY, REVERB, CHAR, DYNAM, and EQ SHALL use the verified controllers in the parameter registry. DELAY's fixed row SHALL be beat-sync, ping-pong, filter enable, and filter width on channel 1. Its delay time, delay feedback, and delay cutoff encoders SHALL use controllers 31, 30, and 32 on channel 1, the same time and feedback parameters as PERFORM. REVERB decay, damping, and pre-delay SHALL use controllers 33, 34, and 35 on channel 1. CHAR amount and tone SHALL be controllers 14–21 on channel 1. The algorithm subpage SHALL be the four pick controllers 22–25, not a second set of amounts. Each pick value SHALL show that bank's effect name in four bands of 32: 0–31, 32–63, 64–95, and 96–127. The line above each Amount and Type encoder SHALL name its fixed slot: Destruct, Overdrive, Colour, or Saturation. Amount labels SHALL read Amount and pick labels SHALL read Type. Each tone encoder SHALL use those two rows for the selected effect's tone description. Two lines fill both rows. One line uses only the upper row. The tone value stays on the bottom line. Destruction shows Pockey, DeRez, Ring Mod, and Fracture. Overdrive shows Tube, Drive, Mackity, and Huge. Colour shows Channel9, IronOxide, ToTape, and Coils. Saturation shows Purest, Spiral, Density, and Mojo. A pick value of 0 SHALL show the first effect. Amount at 0 is what removes the slot.
@@ -79,7 +83,7 @@ DYNAM SHALL label controllers 41–45 from the host-commanded compressor type. S
 - **THEN** controller 51 stays at that value
 
 ### Requirement: Delay time sync mode
-The host SHALL use one delay-time controller, 31 on channel 1, shared with PERFORM. Beat-sync, controller 108, SHALL NOT select a different time controller.
+The host SHALL use one delay-time controller, 31 on channel 1, shared with PERFORM. The module stores that controller on both `delay` and `delaymustime`. Beat-sync, controller 108, SHALL select which stored time is heard and SHALL NOT select a different time controller. Filter width, controller 111, SHALL NOT be given a learned source.
 
 #### Scenario: One time control
 - **WHEN** beat-sync is On and the delay-time encoder turns

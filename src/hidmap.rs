@@ -260,6 +260,18 @@ pub fn parse_control(text: &str) -> Option<ControlId> {
 /// bounce longer than others, so the wait covers that mechanical spread.
 pub const PAD_RELEASE_REPORTS: u8 = 36;
 
+/// 12-bit counts at or below this are the pad being up. Both copies of a pad
+/// must be above it before a press.
+///
+/// From `docs/hardware-spike/pad-floor.log`, 2026-11-02. A hard hit on the
+/// top-right pad (host pad 15) reached 2625 and 2364 on the two copies. The
+/// same hit moved the pad to its left to 90/90, the pad below to 122/75, the
+/// next pad down that column to 105/93, and the bottom pad of the column to
+/// 102/99. A lighter hit on the same pad reached 1312 and 1024 and moved no
+/// neighbor. 123 is the smallest whole count above that coupling and below
+/// the lighter hit.
+pub const PAD_PRESSURE_FLOOR: i32 = 123;
+
 /// Remembers which pads are down so a short return to zero does not retrigger.
 #[derive(Clone, Debug)]
 pub struct PadHold {
@@ -319,7 +331,7 @@ pub fn events_from_reports(
     current: &[u8],
     time_ms: u64,
 ) -> Vec<InputEvent> {
-    events_holding(assignment, previous, current, time_ms, None)
+    events_holding(assignment, previous, current, time_ms, None, PAD_PRESSURE_FLOOR)
 }
 
 /// Same comparison, but a pad stays held until pressure has been zero for
@@ -331,7 +343,14 @@ pub fn events_from_reports_held(
     time_ms: u64,
     hold: &mut PadHold,
 ) -> Vec<InputEvent> {
-    events_holding(assignment, previous, current, time_ms, Some(hold))
+    events_holding(
+        assignment,
+        previous,
+        current,
+        time_ms,
+        Some(hold),
+        PAD_PRESSURE_FLOOR,
+    )
 }
 
 fn events_holding(
@@ -340,8 +359,9 @@ fn events_holding(
     current: &[u8],
     time_ms: u64,
     hold: Option<&mut PadHold>,
+    floor: i32,
 ) -> Vec<InputEvent> {
-    heard_holding(assignment, previous, current, hold)
+    heard_holding(assignment, previous, current, hold, floor)
         .into_iter()
         .filter_map(|heard| {
             let control = heard.control?;
@@ -360,7 +380,7 @@ pub fn heard_from_reports(
     previous: Option<&[u8]>,
     current: &[u8],
 ) -> Vec<Heard> {
-    heard_holding(assignment, previous, current, None)
+    heard_holding(assignment, previous, current, None, PAD_PRESSURE_FLOOR)
 }
 
 fn heard_holding(
@@ -368,6 +388,7 @@ fn heard_holding(
     previous: Option<&[u8]>,
     current: &[u8],
     mut hold: Option<&mut PadHold>,
+    floor: i32,
 ) -> Vec<Heard> {
     let Some(previous) = previous else {
         return Vec::new();
@@ -420,8 +441,8 @@ fn heard_holding(
                 value_byte,
                 high_byte,
             } => {
-                let before = pad_pressure(previous, value_byte, high_byte);
-                let now = pad_pressure(current, value_byte, high_byte);
+                let before = pad_pressure(previous, value_byte, high_byte, floor);
+                let now = pad_pressure(current, value_byte, high_byte, floor);
                 if let (Some(ControlId::Pad(index)), Some(hold)) = (field.control, hold.as_mut())
                 {
                     if let Some(action) = hold.edge(index, before, now) {
@@ -479,18 +500,19 @@ fn adc12(report: &[u8], value_byte: usize, high_byte: usize) -> i32 {
 }
 
 /// Pressure from the first copy. When the report also carries the repeated
-/// copy 32 bytes later, either copy at zero means the pad is up.
-fn pad_pressure(report: &[u8], value_byte: usize, high_byte: usize) -> i32 {
+/// copy 32 bytes later, either copy at or below `floor` means the pad is up.
+/// The returned count is the primary copy, so velocity still follows the hit.
+fn pad_pressure(report: &[u8], value_byte: usize, high_byte: usize, floor: i32) -> i32 {
     let primary = adc12(report, value_byte, high_byte);
     let mirror_high = high_byte.saturating_add(32);
     if mirror_high >= report.len() {
-        return primary;
+        return if primary > floor { primary } else { 0 };
     }
     let mirror = adc12(report, value_byte.saturating_add(32), mirror_high);
-    if primary == 0 || mirror == 0 {
-        0
-    } else {
+    if primary > floor && mirror > floor {
         primary
+    } else {
+        0
     }
 }
 
@@ -731,5 +753,58 @@ mod tests {
         report[57] = report[25];
         report[58] = report[26];
         report
+    }
+
+    #[test]
+    fn pressure_at_the_floor_does_not_press_a_neighbor_or_retrigger() {
+        let floor = 40;
+        let map = Assignment::load_yaml(
+            "fields:\n  - {control: pad:15, kind: adc12, report: 32, value_byte: 7, high_byte: 8}\n  - {control: pad:14, kind: adc12, report: 32, value_byte: 5, high_byte: 6}\n",
+        )
+        .unwrap();
+        let mut idle = vec![0x20u8];
+        idle.resize(65, 0);
+        let mut hit = idle.clone();
+        write_pair(&mut hit, 7, 200);
+        write_pair(&mut hit, 5, floor as u16);
+        let mut hold = PadHold::default();
+        let pressed = events_holding(&map, Some(&idle), &hit, 1, Some(&mut hold), floor);
+        assert_eq!(pressed.len(), 1);
+        assert_eq!(pressed[0].control, ControlId::Pad(15));
+        assert!(pressed[0].value > 1);
+
+        let mut at_floor = idle.clone();
+        write_pair(&mut at_floor, 7, floor as u16);
+        let mut hold = PadHold::default();
+        assert!(events_holding(&map, Some(&idle), &at_floor, 2, Some(&mut hold), floor).is_empty());
+
+        let mut one_copy = idle.clone();
+        one_copy[7] = 200;
+        one_copy[8] = 0;
+        let mut hold = PadHold::default();
+        assert!(events_holding(&map, Some(&idle), &one_copy, 3, Some(&mut hold), floor).is_empty());
+
+        let mut hold = PadHold::default();
+        let mut previous = idle.clone();
+        let mut down = idle.clone();
+        write_pair(&mut down, 7, 200);
+        let first = events_holding(&map, Some(&previous), &down, 4, Some(&mut hold), floor);
+        assert_eq!(first.len(), 1);
+        previous = down.clone();
+        let up = idle.clone();
+        for _ in 0..(PAD_RELEASE_REPORTS - 1) {
+            let events = events_holding(&map, Some(&previous), &up, 5, Some(&mut hold), floor);
+            assert!(events.is_empty());
+            previous = up.clone();
+        }
+        let again = events_holding(&map, Some(&previous), &down, 6, Some(&mut hold), floor);
+        assert!(again.is_empty());
+    }
+
+    fn write_pair(report: &mut [u8], low: usize, level: u16) {
+        report[low] = (level & 0xFF) as u8;
+        report[low + 1] = ((level >> 8) & 0x0F) as u8;
+        report[low + 32] = report[low];
+        report[low + 33] = report[low + 1];
     }
 }

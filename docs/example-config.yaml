@@ -517,7 +517,7 @@ encoder_pages:
         port: bitbox
         channel: 1
         cc: 38
-        default: 0
+        default: 64
         parameter: pan
         scope: slot
       - label: Pan 2
@@ -525,7 +525,7 @@ encoder_pages:
         port: bitbox
         channel: 2
         cc: 38
-        default: 0
+        default: 64
         parameter: pan
         scope: slot
       - label: Pan 3
@@ -533,7 +533,7 @@ encoder_pages:
         port: bitbox
         channel: 3
         cc: 38
-        default: 0
+        default: 64
         parameter: pan
         scope: slot
       - label: Pan 4
@@ -541,7 +541,7 @@ encoder_pages:
         port: bitbox
         channel: 4
         cc: 38
-        default: 0
+        default: 64
         parameter: pan
         scope: slot
       - label: Pan 5
@@ -549,7 +549,7 @@ encoder_pages:
         port: bitbox
         channel: 5
         cc: 38
-        default: 0
+        default: 64
         parameter: pan
         scope: slot
       - label: Pan 6
@@ -557,7 +557,7 @@ encoder_pages:
         port: bitbox
         channel: 6
         cc: 38
-        default: 0
+        default: 64
         parameter: pan
         scope: slot
       - label: Pan 7
@@ -565,7 +565,7 @@ encoder_pages:
         port: bitbox
         channel: 7
         cc: 38
-        default: 0
+        default: 64
         parameter: pan
         scope: slot
       - label: Pan 8
@@ -573,7 +573,7 @@ encoder_pages:
         port: bitbox
         channel: 8
         cc: 38
-        default: 0
+        default: 64
         parameter: pan
         scope: slot
 

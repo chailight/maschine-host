@@ -30,7 +30,7 @@
 
 ## 5. Verification and delivery
 - [x] Run event-driven tests for group changes during notes, channel routing, duplicated parameter bindings, and unknown state.
-- [ ] Validate a real Bitbox preset's MIDI Learn setup and record its configuration.
+- [x] Validate a real Bitbox preset's MIDI Learn setup and record its configuration. `presets/TEST/preset.xml` is the module-saved learn. `presets/host-template/preset.xml` extends it to Groups A–H. The configuration is recorded in the configuration-and-testing spec. The expanded file has not been loaded on the module.
 - [ ] Perform live hardware tests: delay-send/feedback gesture; all-eight sends; dynamic compressor/EQ labels; Clip release on exit.
 - [ ] Cold-start PERFORM lamp stays dark on the first host launch after the MK2 is powered on. A later launch without power-cycling lights it. See `docs/troubleshooting.md`. Not blocking.
 - [x] Document setup, MIDI Learn requirements, mapping overrides and unsupported functions.

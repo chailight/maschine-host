@@ -1127,6 +1127,8 @@ mod tests {
                     delay.encoders[0].kind,
                     EncoderKind::MidiCc { channel: 1, cc: Some(108), .. }
                 ));
+                let pan = config.encoder_pages.iter().find(|page| page.id == "mix-pan").unwrap();
+                assert!(pan.encoders.iter().all(|encoder| encoder.default_value == 64));
                 let level = config.encoder_pages.iter().find(|page| page.id == "mix-level").unwrap();
                 assert!(matches!(
                     level.encoders[6].kind,

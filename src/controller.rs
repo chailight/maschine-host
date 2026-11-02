@@ -262,7 +262,46 @@ impl Controller {
         self.force_refresh = true;
         self.first_feedback_ms = None;
         self.log(LogLevel::Info, "controller connected".to_string());
-        Vec::new()
+        self.opening_pans()
+    }
+
+    /// Centre pan on each slot. Level, filter, and pitch stay where the module saved them.
+    fn opening_pans(&mut self) -> Vec<OutputAction> {
+        let found: Vec<(String, u8, u8, i32)> = self
+            .config
+            .encoder_pages
+            .iter()
+            .flat_map(|page| page.encoders.iter().enumerate())
+            .filter_map(|(index, encoder)| {
+                if encoder.parameter.as_deref() != Some("pan") {
+                    return None;
+                }
+                let EncoderKind::MidiCc {
+                    port,
+                    channel,
+                    cc: Some(cc),
+                } = &encoder.kind
+                else {
+                    return None;
+                };
+                if *cc != 38 {
+                    return None;
+                }
+                let value = self
+                    .shared
+                    .get(&("pan".to_string(), index as u8))
+                    .map(|state| state.value)
+                    .unwrap_or(encoder.default_value);
+                Some((port.clone(), *channel, *cc, value))
+            })
+            .collect();
+        found
+            .into_iter()
+            .map(|(port, channel, cc, value)| {
+                let sent = self.voiced(cc, value);
+                OutputAction::Midi(MidiMessage::cc(&port, channel, cc, sent))
+            })
+            .collect()
     }
 
     pub fn shutdown(&mut self) -> Vec<OutputAction> {
@@ -2001,6 +2040,33 @@ mod tests {
         ));
         let character = host.handle(InputEvent::delta(ControlId::Encoder(1), 3, 7));
         assert_eq!(midi_bytes(&character), vec![[0xB0, 15, 3]]);
+    }
+
+    #[test]
+    fn pan_starts_at_centre_and_one_step_leaves_that_channel() {
+        let config = load_yaml(include_str!("../docs/example-config.yaml")).expect("bitbox");
+        let mut host = Controller::new(config);
+        let opening = host.connect();
+        assert_eq!(
+            midi_bytes(&opening),
+            (0..8u8)
+                .map(|channel| [0xB0 + channel, 38, 64])
+                .collect::<Vec<_>>()
+        );
+        host.handle(InputEvent::press(
+            ControlId::Button(SilkButton::Display2),
+            1,
+            1,
+        ));
+        for step in 0..4 {
+            host.handle(InputEvent::press(ControlId::PageRight, 1, 2 + step));
+        }
+        assert_eq!(host.config.encoder_pages[host.active_page()].id, "mix-pan");
+        for index in 0..8 {
+            assert_eq!(host.encoder_text(host.active_page(), index).1, "64");
+        }
+        let turned = host.handle(InputEvent::delta(ControlId::Encoder(2), 1, 10));
+        assert_eq!(midi_bytes(&turned), vec![[0xB2, 38, 65]]);
     }
 
     #[test]

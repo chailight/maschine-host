@@ -18,7 +18,7 @@ Changing Group A-H instrument selection; implementing a sampler; machine listeni
 The performer can play a selected group while controlling that slot's delay and reverb sends, switch to an eight-slot mixer, or enter sound-design pages without losing instrument selection. Global delay feedback appears only after its stock-learn controller is configured.
 
 ## Prerequisites / validation
-The published community patch for stock 2.3.4 is the source for patch-fixed controllers: https://github.com/modularpatcher/bitbox-micro-fw-patch/blob/main/CC-REFERENCE.md. The installed module was not read. Delay time, delay feedback, reverb parameters, and per-slot level, filter, pan, and pitch are stock MIDI Learn, not fixed controllers. The host stores the last command it sent and does not read the module.
+The published community patch for stock 2.3.4 is the source for patch-fixed controllers: https://github.com/modularpatcher/bitbox-micro-fw-patch/blob/main/CC-REFERENCE.md. The installed module was not read. Delay time, delay feedback, reverb parameters, and per-slot level, filter, pan, and pitch are stock MIDI Learn, not fixed controllers. `presets/TEST/preset.xml` records those learns as saved on the module, and `presets/host-template/preset.xml` carries them for Groups A–H. The host stores the last command it sent and does not read the module.
 
 ## Conflicts with the current host
 - Groups A–H stay the playable instruments. Category buttons must not select a group, and Pad Mode must not open the PAD category.

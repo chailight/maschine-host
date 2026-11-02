@@ -184,7 +184,7 @@ fn run(
         }
     };
     let mut adapter: Box<dyn HardwareAdapter> = match hidopen::open_input(assignment, lamps, panels) {
-        ControllerLink::Open(input) => {
+        ControllerLink::Open(mut input) => {
             if input.lamps_matched() && input.panels_matched() {
                 eprintln!(
                     "MK2 HID input is open with {confirmed} confirmed control(s). Group, pad, and button lamps follow the selection. The LCD panels show the active encoder page. A press with no confirmed pressure field uses stand-in value {}.",
@@ -200,6 +200,18 @@ fn run(
                     "MK2 HID input is open with {confirmed} confirmed control(s). The lamp map is not matched, so group and pad LEDs stay unchanged. A press with no confirmed pressure field uses stand-in value {}.",
                     input.stand_in_press()
                 );
+            }
+            let actions = controller.connect();
+            let report = apply_actions(
+                &mut controller,
+                actions,
+                &mut midi,
+                &mut mixer,
+                &mut input,
+                now_ms(),
+            );
+            for error in report.errors {
+                eprintln!("{error}");
             }
             Box::new(input)
         }

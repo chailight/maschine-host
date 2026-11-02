@@ -1,7 +1,7 @@
 # Labeled on 2026-10-26 from docs/hardware-spike/capture-session.log.
 # Pads were pressed bottom-left to top-right. The eight screen knobs were
 # turned clockwise, then groups A-H were pressed. Report 0x20 bytes 33-64
-# repeat the pad block. Both copies must be above zero before a press counts.
+# repeat the pad block. Both copies must be above the pressure floor before a press counts.
 # A knob count changes by 4 for the smallest step seen, so scale 4 emits +1.
 stand_in_press: 100
 fields:

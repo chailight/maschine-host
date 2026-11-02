@@ -35,10 +35,19 @@ PERFORM encoders 5–8 are the useful controls for the selected pad type. Granul
 - Clip: Live Flip 117, jungle cycle 115, manual tempo 114, encoder 8 unassigned.
 - Slicer: play through 90, encoders 6–8 unassigned.
 
-No pad type is configured on Groups A–H today, so encoders 5–8 stay inactive until one is set. There is one delay-time controller, 31 on channel 1. A synced and a free time control are not separate encoders.
+No pad type is configured on Groups A–H today, so encoders 5–8 stay inactive until one is set. There is one delay-time controller, 31 on channel 1. The module keeps two time values, and Beat Sync chooses which one is heard. Both values are learned to controller 31. A synced and a free time control are not separate encoders.
 
 ## MIDI mapping policy
 The registry is the only source of patch-fixed controllers. One parameter shared by PERFORM and MIX uses one stored value for that slot. The host does not read values back from the module. On/off text uses 64. Named bands are shown only after their value ranges are recorded. Controllers that step on any value above 0 stay off these rows: Character next 26–29, compressor auto-makeup 46, compressor next type 48, clip method 112, clip clock 113, and jungle flavour 116.
+
+## Preset template
+`presets/TEST/preset.xml` is the preset saved on the module after the learns. It covers delay, reverb, and the Group B pad. `presets/host-template/preset.xml` copies that pad learn onto Groups A–H. The module has not yet reloaded the expanded file.
+
+The file stores a learn as `modsource src="midicc"`. `mchan` counts from 0, so Group A is `0` and Group H is `7`. The pad's own MIDI input, `midimode`, counts from 1, and `0` means no channel. On the grid, row 0 columns 0–3 are channels 1–4, and row 1 columns 0–3 are channels 5–8. The other cells have no channel and no learned controller.
+
+A learned controller moves upward from the saved value. Amount `1000` is the full travel. Pan is saved at `-1000`, full left, so controller 64 is the centre. Level, filter, and pitch are saved at 0. Delay feedback, both delay times, cutoff, and the three reverb parameters are saved at 0. Beat Sync is saved on. Controller 111 is the firmware's width control and has no learn.
+
+Granular, sample, slicer, and clip controllers are firmware controllers. They are not entries in this preset. Preset Manager 1.0 drops `mchan` and `ccnum` on save and replaces the delay and reverb cells, so this file is saved on the module.
 
 ## Display
 Each column shows the category name at the top, the encoder label, and either the formatted value, the number, UNMAPPED, or unavailable. The value is the last command the host sent.
