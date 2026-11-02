@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <document>
     <session version="2">
-        <cell row="0" column="0" layer="0" filename="\america-is-many-things\Meat Kira.wav" type="sample">
+        <cell row="0" column="0" layer="0" filename=".\Meat Kira" type="sample">
             <params gaindb="0" pitch="0" panpos="-1000" samtrigtype="0" loopmode="0" loopmodes="0" midimode="1" reverse="0" cellmode="0" envattack="0" envdecay="0" envsus="1000" envrel="200" quantsize="3" synctype="5" outputbus="0" polymode="2" polymodeslice="0" slicestepmode="0" chokegrp="0" dualfilcutoff="0" res="500" rootnote="36" beatcount="0" fx1send="0" fx2send="0" interpqual="0" playthru="0" padnote="0" deftemplate="0" recpresetlen="0" recquant="3" recinput="0" recusethres="0" recthresh="-20000" recmonoutbus="0" multisammode="1" />
             <modsource dest="gaindb" src="velocity" slot="0" amount="400" />
             <modsource dest="gaindb" src="midivol" slot="2" amount="1000" />
@@ -33,7 +33,7 @@
             <modsource dest="panpos" src="midipan" slot="2" amount="1000" />
             <slices />
         </cell>
-        <cell row="0" column="1" layer="0" filename="\america-is-many-things\Bright Kira.wav" type="sample">
+        <cell row="0" column="1" layer="0" filename=".\Bright Kira" type="sample">
             <params gaindb="0" pitch="0" panpos="-1000" samtrigtype="0" loopmode="0" loopmodes="0" midimode="2" reverse="0" cellmode="0" envattack="0" envdecay="0" envsus="1000" envrel="200" quantsize="3" synctype="5" outputbus="0" polymode="2" polymodeslice="0" slicestepmode="0" chokegrp="0" dualfilcutoff="0" res="500" rootnote="36" beatcount="0" fx1send="0" fx2send="0" interpqual="0" playthru="0" padnote="0" deftemplate="0" recpresetlen="0" recquant="3" recinput="0" recusethres="0" recthresh="-20000" recmonoutbus="0" multisammode="1" />
             <modsource dest="gaindb" src="velocity" slot="0" amount="400" />
             <modsource dest="gaindb" src="midivol" slot="2" amount="1000" />
@@ -65,7 +65,7 @@
             <modsource dest="panpos" src="midipan" slot="2" amount="1000" />
             <slices />
         </cell>
-        <cell row="0" column="2" layer="0" filename="\america-is-many-things\Abbrand Kit.wav" type="sample">
+        <cell row="0" column="2" layer="0" filename=".\Abbrand Kit" type="sample">
             <params gaindb="0" pitch="0" panpos="-1000" samtrigtype="0" loopmode="0" loopmodes="0" midimode="3" reverse="0" cellmode="0" envattack="0" envdecay="0" envsus="1000" envrel="200" quantsize="3" synctype="5" outputbus="0" polymode="2" polymodeslice="0" slicestepmode="0" chokegrp="0" dualfilcutoff="0" res="500" rootnote="48" beatcount="0" fx1send="0" fx2send="0" interpqual="0" playthru="0" padnote="0" deftemplate="0" recpresetlen="0" recquant="3" recinput="0" recusethres="0" recthresh="-20000" recmonoutbus="0" multisammode="1" />
             <modsource dest="gaindb" src="velocity" slot="0" amount="400" />
             <modsource dest="gaindb" src="midivol" slot="2" amount="1000" />
@@ -97,7 +97,7 @@
             <modsource dest="panpos" src="midipan" slot="2" amount="1000" />
             <slices />
         </cell>
-        <cell row="0" column="3" layer="0" filename="\america-is-many-things\05 America Many Things.wav" type="sample">
+        <cell row="0" column="3" layer="0" filename=".\05 America Many Things" type="sample">
             <params gaindb="0" pitch="0" panpos="-1000" samtrigtype="0" loopmode="0" loopmodes="0" midimode="4" reverse="0" cellmode="0" envattack="0" envdecay="0" envsus="1000" envrel="200" quantsize="3" synctype="5" outputbus="0" polymode="2" polymodeslice="0" slicestepmode="0" chokegrp="0" dualfilcutoff="0" res="500" rootnote="36" beatcount="0" fx1send="0" fx2send="0" interpqual="0" playthru="0" padnote="0" deftemplate="0" recpresetlen="0" recquant="3" recinput="0" recusethres="0" recthresh="-20000" recmonoutbus="0" multisammode="1" />
             <modsource dest="gaindb" src="velocity" slot="0" amount="400" />
             <modsource dest="gaindb" src="midivol" slot="2" amount="1000" />
@@ -179,134 +179,137 @@
         <cell row="4" layer="3" type="null">
             <params />
         </cell>
-        <cell row="0" filename="\america-is-many-things\Meat Kira.wav" type="asset">
+        <cell row="0" filename=".\Meat Kira\Meat Kira.wav" type="asset">
             <params rootnote="36" keyrangebottom="0" keyrangetop="127" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="0" />
         </cell>
-        <cell row="1" filename="\america-is-many-things\Bright Kira C1.wav" type="asset">
+        <cell row="1" filename=".\Bright Kira\Bright Kira C1.wav" type="asset">
             <params rootnote="36" keyrangebottom="0" keyrangetop="39" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="2" filename="\america-is-many-things\Bright Kira F#1.wav" type="asset">
+        <cell row="2" filename=".\Bright Kira\Bright Kira F#1.wav" type="asset">
             <params rootnote="42" keyrangebottom="40" keyrangetop="45" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="3" filename="\america-is-many-things\Bright Kira C2.wav" type="asset">
+        <cell row="3" filename=".\Bright Kira\Bright Kira C2.wav" type="asset">
             <params rootnote="48" keyrangebottom="46" keyrangetop="51" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="4" filename="\america-is-many-things\Bright Kira F#2.wav" type="asset">
+        <cell row="4" filename=".\Bright Kira\Bright Kira F#2.wav" type="asset">
             <params rootnote="54" keyrangebottom="52" keyrangetop="57" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="5" filename="\america-is-many-things\Bright Kira C3.wav" type="asset">
+        <cell row="5" filename=".\Bright Kira\Bright Kira C3.wav" type="asset">
             <params rootnote="60" keyrangebottom="58" keyrangetop="63" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="6" filename="\america-is-many-things\Bright Kira F#3.wav" type="asset">
+        <cell row="6" filename=".\Bright Kira\Bright Kira F#3.wav" type="asset">
             <params rootnote="66" keyrangebottom="64" keyrangetop="69" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="7" filename="\america-is-many-things\Bright Kira C4.wav" type="asset">
+        <cell row="7" filename=".\Bright Kira\Bright Kira C4.wav" type="asset">
             <params rootnote="72" keyrangebottom="70" keyrangetop="75" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="8" filename="\america-is-many-things\Bright Kira F#4.wav" type="asset">
+        <cell row="8" filename=".\Bright Kira\Bright Kira F#4.wav" type="asset">
             <params rootnote="78" keyrangebottom="76" keyrangetop="81" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="9" filename="\america-is-many-things\Bright Kira C5.wav" type="asset">
+        <cell row="9" filename=".\Bright Kira\Bright Kira C5.wav" type="asset">
             <params rootnote="84" keyrangebottom="82" keyrangetop="87" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="10" filename="\america-is-many-things\Bright Kira F#5.wav" type="asset">
+        <cell row="10" filename=".\Bright Kira\Bright Kira F#5.wav" type="asset">
             <params rootnote="90" keyrangebottom="88" keyrangetop="93" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="11" filename="\america-is-many-things\Bright Kira C6.wav" type="asset">
+        <cell row="11" filename=".\Bright Kira\Bright Kira C6.wav" type="asset">
             <params rootnote="96" keyrangebottom="94" keyrangetop="99" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="12" filename="\america-is-many-things\Bright Kira F#6.wav" type="asset">
+        <cell row="12" filename=".\Bright Kira\Bright Kira F#6.wav" type="asset">
             <params rootnote="102" keyrangebottom="100" keyrangetop="127" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="1" />
         </cell>
-        <cell row="13" filename="\america-is-many-things\Kick Abbrand 1.wav" type="asset">
+        <cell row="13" filename=".\Abbrand Kit\Kick Abbrand 1.wav" type="asset">
             <params rootnote="48" keyrangebottom="0" keyrangetop="49" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="14" filename="\america-is-many-things\Clap Abbrand.wav" type="asset">
+        <cell row="14" filename=".\Abbrand Kit\Clap Abbrand.wav" type="asset">
             <params rootnote="50" keyrangebottom="50" keyrangetop="50" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="15" filename="\america-is-many-things\ClosedHH Abbrand 1.wav" type="asset">
+        <cell row="15" filename=".\Abbrand Kit\ClosedHH Abbrand 1.wav" type="asset">
             <params rootnote="51" keyrangebottom="51" keyrangetop="52" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="16" filename="\america-is-many-things\Kick Abbrand 2.wav" type="asset">
+        <cell row="16" filename=".\Abbrand Kit\Kick Abbrand 2.wav" type="asset">
             <params rootnote="53" keyrangebottom="53" keyrangetop="54" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="17" filename="\america-is-many-things\Rim Abbrand.wav" type="asset">
+        <cell row="17" filename=".\Abbrand Kit\Rim Abbrand.wav" type="asset">
             <params rootnote="55" keyrangebottom="55" keyrangetop="55" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="18" filename="\america-is-many-things\ClosedHH Abbrand 2.wav" type="asset">
+        <cell row="18" filename=".\Abbrand Kit\ClosedHH Abbrand 2.wav" type="asset">
             <params rootnote="56" keyrangebottom="56" keyrangetop="57" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="19" filename="\america-is-many-things\Perc[128]  Abbrand.wav" type="asset">
+        <cell row="19" filename=".\Abbrand Kit\Perc[128]  Abbrand.wav" type="asset">
             <params rootnote="58" keyrangebottom="58" keyrangetop="59" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="20" filename="\america-is-many-things\SFX Abbrand 1.wav" type="asset">
+        <cell row="20" filename=".\Abbrand Kit\SFX Abbrand 1.wav" type="asset">
             <params rootnote="60" keyrangebottom="60" keyrangetop="61" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="21" filename="\america-is-many-things\Crackle Abbrand.wav" type="asset">
+        <cell row="21" filename=".\Abbrand Kit\Crackle Abbrand.wav" type="asset">
             <params rootnote="62" keyrangebottom="62" keyrangetop="62" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="22" filename="\america-is-many-things\Synth Abbrand 1.wav" type="asset">
+        <cell row="22" filename=".\Abbrand Kit\Synth Abbrand 1.wav" type="asset">
             <params rootnote="63" keyrangebottom="63" keyrangetop="64" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="23" filename="\america-is-many-things\Synth Abbrand 2.wav" type="asset">
+        <cell row="23" filename=".\Abbrand Kit\Synth Abbrand 2.wav" type="asset">
             <params rootnote="65" keyrangebottom="65" keyrangetop="66" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="24" filename="\america-is-many-things\Chord Abbrand.wav" type="asset">
+        <cell row="24" filename=".\Abbrand Kit\Chord Abbrand.wav" type="asset">
             <params rootnote="67" keyrangebottom="67" keyrangetop="67" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="25" filename="\america-is-many-things\Noise Abbrand.wav" type="asset">
+        <cell row="25" filename=".\Abbrand Kit\Noise Abbrand.wav" type="asset">
             <params rootnote="68" keyrangebottom="68" keyrangetop="69" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="26" filename="\america-is-many-things\Bass Abbrand 1.wav" type="asset">
+        <cell row="26" filename=".\Abbrand Kit\Bass Abbrand 1.wav" type="asset">
             <params rootnote="70" keyrangebottom="70" keyrangetop="71" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="27" filename="\america-is-many-things\Bass Abbrand 2.wav" type="asset">
+        <cell row="27" filename=".\Abbrand Kit\Bass Abbrand 2.wav" type="asset">
             <params rootnote="72" keyrangebottom="72" keyrangetop="127" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="2" />
         </cell>
-        <cell row="28" filename="\america-is-many-things\05 America Many Things.wav" type="asset">
+        <cell row="28" filename=".\05 America Many Things\05 America Many Things.wav" type="asset">
             <params rootnote="36" keyrangebottom="0" keyrangetop="36" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="29" filename="\america-is-many-things\96 Rob Freedom.wav" type="asset">
+        <cell row="29" filename=".\05 America Many Things\96 Rob Freedom.wav" type="asset">
             <params rootnote="37" keyrangebottom="37" keyrangetop="37" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="30" filename="\america-is-many-things\96 Rob Freedom 2.wav" type="asset">
+        <cell row="30" filename=".\05 America Many Things\96 Rob Freedom 2.wav" type="asset">
             <params rootnote="38" keyrangebottom="38" keyrangetop="38" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="31" filename="\america-is-many-things\96 Rob Freedom 3.wav" type="asset">
+        <cell row="31" filename=".\05 America Many Things\96 Rob Freedom 3.wav" type="asset">
             <params rootnote="39" keyrangebottom="39" keyrangetop="39" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="32" filename="\america-is-many-things\81 Over Seas.wav" type="asset">
+        <cell row="32" filename=".\05 America Many Things\81 Over Seas.wav" type="asset">
             <params rootnote="40" keyrangebottom="40" keyrangetop="40" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="33" filename="\america-is-many-things\96 Rob Freedom 4.wav" type="asset">
+        <cell row="33" filename=".\05 America Many Things\96 Rob Freedom 4.wav" type="asset">
             <params rootnote="41" keyrangebottom="41" keyrangetop="41" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="34" filename="\america-is-many-things\96 Rob Freedom 5.wav" type="asset">
+        <cell row="34" filename=".\05 America Many Things\96 Rob Freedom 5.wav" type="asset">
             <params rootnote="42" keyrangebottom="42" keyrangetop="42" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="35" filename="\america-is-many-things\81 Over Seas 2.wav" type="asset">
+        <cell row="35" filename=".\05 America Many Things\81 Over Seas 2.wav" type="asset">
             <params rootnote="43" keyrangebottom="43" keyrangetop="43" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="36" filename="\america-is-many-things\96 Rob Freedom.wav" type="asset">
+        <cell row="36" filename=".\05 America Many Things\96 Rob Freedom 6.wav" type="asset">
             <params rootnote="44" keyrangebottom="44" keyrangetop="44" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="37" filename="\america-is-many-things\96 Rob Freedom 2.wav" type="asset">
+        <cell row="37" filename=".\05 America Many Things\96 Rob Freedom 7.wav" type="asset">
             <params rootnote="45" keyrangebottom="45" keyrangetop="45" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="38" filename="\america-is-many-things\96 Rob Freedom 3.wav" type="asset">
+        <cell row="38" filename=".\05 America Many Things\96 Rob Freedom 8.wav" type="asset">
             <params rootnote="46" keyrangebottom="46" keyrangetop="46" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="39" filename="\america-is-many-things\96 Rob Freedom 6.wav" type="asset">
+        <cell row="39" filename=".\05 America Many Things\96 Rob Freedom 9.wav" type="asset">
             <params rootnote="47" keyrangebottom="47" keyrangetop="47" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="40" filename="\america-is-many-things\96 Rob Freedom 7.wav" type="asset">
+        <cell row="40" filename=".\05 America Many Things\96 Rob Freedom 10.wav" type="asset">
             <params rootnote="48" keyrangebottom="48" keyrangetop="48" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="41" filename="\america-is-many-things\96 Rob Freedom 8.wav" type="asset">
+        <cell row="41" filename=".\05 America Many Things\96 Rob Freedom 11.wav" type="asset">
             <params rootnote="49" keyrangebottom="49" keyrangetop="49" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
-        <cell row="42" filename="\america-is-many-things\96 Rob Freedom 9.wav" type="asset">
-            <params rootnote="50" keyrangebottom="50" keyrangetop="127" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
+        <cell row="42" filename=".\05 America Many Things\96 Rob Freedom 12.wav" type="asset">
+            <params rootnote="50" keyrangebottom="50" keyrangetop="50" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
+        </cell>
+        <cell row="43" filename=".\05 America Many Things\96 Rob Freedom 13.wav" type="asset">
+            <params rootnote="51" keyrangebottom="51" keyrangetop="127" velroot="0" velrangebottom="0" velrangetop="128" asssrcrow="0" asssrccol="3" />
         </cell>
         <cell row="0" layer="8" type="ioconnectin">
             <params inputiocon="gatein" />

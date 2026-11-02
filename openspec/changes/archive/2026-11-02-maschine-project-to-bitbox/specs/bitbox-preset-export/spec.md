@@ -32,15 +32,19 @@ A group whose sampled sounds each have one file SHALL place those sounds on the 
 - **WHEN** nine groups contain samples
 - **THEN** eight pads are filled and the report names the ninth group
 
-### Requirement: Preset folder and card copy
-The exporter SHALL write a card layout. Wav files go only in a top-level folder named for the project. That folder SHALL NOT contain `preset.xml`. `preset.xml` goes only in `PRESETS/<project name>/`, and that folder SHALL NOT contain wav files. An existing preset directory named `Presets` or `PRESETS` SHALL be reused. Each sample path in `preset.xml` SHALL be a Bitbox path, using backslashes, beginning with the sample folder's name and ending with the wav basename. A sample cell's filename SHALL be one of those wav paths, so the Micro shows that basename, not the preset folder on its own. A destination path, when given, SHALL receive that layout at its root and SHALL leave every other file there untouched. The command SHALL NOT modify the source project or the host template.
+### Requirement: Packed preset folder
+The exporter SHALL write one packed preset directory named for the project under `PRESETS/`, or under an existing directory named `Presets`. That directory SHALL contain `preset.xml` and one subdirectory per filled pad. Each subdirectory SHALL be named for that pad and SHALL contain the wav files that pad uses. The exporter SHALL NOT write a sample folder at the card root. A sample cell's filename SHALL be that pad's subdirectory as a preset-relative path beginning with `.\`, and SHALL NOT name a wav file. Each asset filename SHALL be a preset-relative path beginning with `.\`, naming that same subdirectory, and ending with the wav basename. A destination path, when given, SHALL receive that packed directory under its preset folder and SHALL leave every other file there untouched. The command SHALL NOT modify the source project or the host template.
 
-A stored start and end inside a sample SHALL be written out as its own wav containing that region. A kit note's key range SHALL meet the next kit note, and the first kit note SHALL extend down to note 0.
+A stored start and end inside a sample SHALL be written out as its own wav containing that region. A start stored once, whose end is the last frame of the wav on disk, is a bounce of an earlier edit: the exporter SHALL copy that wav whole. A kit note's key range SHALL meet the next kit note, and the first kit note SHALL extend down to note 0.
 
-#### Scenario: Samples travel with the preset
+#### Scenario: Samples travel inside the preset
 - **WHEN** a group using `Kick Abbrand 1.wav` is exported
-- **THEN** the sample folder contains that wav and no `preset.xml`, and `PRESETS/<project>/preset.xml` points at the wav with a backslash path that starts with the sample folder name and ends with the wav basename
+- **THEN** `PRESETS/<project>/preset.xml` exists, that wav is in a subdirectory of the preset, the sample cell filename is `.\` plus the subdirectory name, and the asset path begins with `.\`, names that subdirectory, and ends with the wav basename
 
-#### Scenario: Destination mirrors the card
+#### Scenario: A bounced wav keeps its opening
+- **WHEN** a sample's start is stored once and its end is the last frame of the wav on disk
+- **THEN** the exported wav has the same length as that file
+
+#### Scenario: Destination is a packed preset
 - **WHEN** a destination directory is given
-- **THEN** that directory contains `<project>/` with the wavs only and `PRESETS/<project>/preset.xml` only, and the source project is unchanged
+- **THEN** that directory contains `PRESETS/<project>/preset.xml` and the pad subdirectories with their wavs, it has no `<project>` sample folder at its root, and the source project is unchanged

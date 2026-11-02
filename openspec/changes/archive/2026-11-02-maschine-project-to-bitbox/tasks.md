@@ -11,8 +11,8 @@
 - [x] 2.1 Copy `presets/host-template/preset.xml` and keep its learned controllers, full-left pan, and empty pads.
 - [x] 2.2 Place sampled groups on row 0 columns 0–3 and row 1 columns 0–3, channels 1–8. Skip groups with no samples. Name any group past the eighth in the report.
 - [x] 2.3 Map one-shot sounds to notes 36 and upward, at most 16, and map a multi-sample sound's files onto their root notes. In a mixed group, keep the multi-sample and report the one-shots.
-- [x] 2.4 Copy the used wav files into the output folder and point `preset.xml` at them with a backslash path that starts with the folder name.
-- [x] 2.5 Add a destination argument that copies the finished folder, and leave the source project and the host template unchanged.
+- [x] 2.4 Copy each pad's wavs into a subdirectory of `PRESETS/<project>/` and point `preset.xml` at the folder with `.\<pad>` and at each wav with `.\<pad>\<file>.wav`.
+- [x] 2.5 Add a destination argument that copies that packed preset into `PRESETS/<name>/`, leaves every other file at the destination, and leaves the source project and the host template unchanged.
 
 ## 3. Check
 

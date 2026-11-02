@@ -156,8 +156,8 @@ class ExportTests(unittest.TestCase):
         self.assertIn('dest="delay"', preset)
         self.assertIn('dest="delaymustime"', preset)
         self.assertNotIn("ccnum=\"111\"", preset)
-        self.assertIn("\\kit\\Kick.wav", preset)
-        self.assertIn("\\kit\\Clap.wav", preset)
+        self.assertIn(".\\Kick\\Kick.wav", preset)
+        self.assertIn(".\\Kick\\Clap.wav", preset)
         roots = [
             int(cell.find("params").get("rootnote"))
             for cell in ET.parse(report.output / "preset.xml").getroot().iter("cell")
@@ -173,10 +173,10 @@ class ExportTests(unittest.TestCase):
         unused = _pad(report.output / "preset.xml", 0, 2)
         self.assertEqual(unused.find("params").get("midimode"), "0")
         self.assertFalse(any(mod.get("src") == "midicc" for mod in unused))
-        self.assertTrue((report.samples / "Kick.wav").is_file())
+        self.assertTrue((report.samples / "Kick" / "Kick.wav").is_file())
+        self.assertFalse((self.root / "out" / "kit").exists())
         kit_pad = _pad(report.output / "preset.xml", 0, 0)
-        self.assertTrue(kit_pad.get("filename", "").endswith(".wav"))
-        self.assertNotEqual(kit_pad.get("filename"), r"\kit")
+        self.assertEqual(kit_pad.get("filename"), r".\Kick")
         ranges = [
             (
                 cell.find("params").get("keyrangebottom"),
@@ -295,16 +295,17 @@ class ExportTests(unittest.TestCase):
         dest = self.root / "card"
         report = tool.export_preset(tool.read_project(path), self.root / "out", dest)
         self.assertEqual(path.read_bytes(), before)
-        self.assertTrue((dest / "PRESETS" / "one" / "preset.xml").is_file())
-        self.assertEqual([path.name for path in (dest / "PRESETS" / "one").iterdir()], ["preset.xml"])
-        self.assertTrue((dest / "one" / "Kick.wav").is_file())
-        self.assertFalse(list((dest / "one").glob("*.xml")))
-        self.assertEqual((dest / "one" / "Kick.wav").read_bytes(), (report.samples / "Kick.wav").read_bytes())
+        packed = dest / "PRESETS" / "one"
+        self.assertTrue((packed / "preset.xml").is_file())
+        self.assertEqual(sorted(path.name for path in packed.iterdir()), ["Kick", "preset.xml"])
+        self.assertTrue((packed / "Kick" / "Kick.wav").is_file())
+        self.assertFalse((dest / "one").exists())
+        self.assertEqual((packed / "Kick" / "Kick.wav").read_bytes(), (report.samples / "Kick" / "Kick.wav").read_bytes())
         (dest / "keep.txt").write_text("stay")
         tool.export_preset(tool.read_project(path), self.root / "out", dest)
         self.assertEqual((dest / "keep.txt").read_text(), "stay")
 
-    def test_dest_named_presets_keeps_samples_out_of_the_preset_folder(self):
+    def test_dest_reuses_presets_and_packs_samples_beside_preset_xml(self):
         body = b"".join(
             [
                 tool.encode_string("Kick"),
@@ -318,9 +319,10 @@ class ExportTests(unittest.TestCase):
         (card / "keep.txt").write_text("stay")
         tool.export_preset(tool.read_project(path), None, card)
         preset = card / "PRESETS" / "one"
-        self.assertEqual([item.name for item in preset.iterdir()], ["preset.xml"])
-        self.assertTrue((card / "one" / "Kick.wav").is_file())
-        self.assertFalse((card / "one" / "preset.xml").exists())
+        self.assertEqual(sorted(item.name for item in preset.iterdir()), ["Kick", "preset.xml"])
+        self.assertTrue((preset / "Kick" / "Kick.wav").is_file())
+        self.assertFalse(list(preset.glob("*.wav")))
+        self.assertFalse((card / "one").exists())
         self.assertEqual((card / "keep.txt").read_text(), "stay")
         self.assertFalse((self.root / "one").exists())
 
@@ -364,11 +366,11 @@ class ExportTests(unittest.TestCase):
         self.assertEqual((whole.start, whole.end), (0, 199))
         self.assertEqual((piece.start, piece.end), (10, 80))
         report = tool.export_preset(project, self.root / "out", names={"2": "vocals"})
-        self.assertEqual(tool._pcm(report.samples / "Whole.wav")[2], 200)
-        self.assertEqual(tool._pcm(report.samples / "vocals.wav")[2], 71)
+        self.assertEqual(tool._pcm(report.samples / "Whole" / "Whole.wav")[2], 200)
+        self.assertEqual(tool._pcm(report.samples / "vocals" / "Slice.wav")[2], 71)
         preset = (report.output / "preset.xml").read_text()
-        self.assertIn("\\cuts\\vocals.wav", preset)
-        self.assertNotIn('filename="\\cuts"', preset)
+        self.assertIn(".\\vocals\\Slice.wav", preset)
+        self.assertEqual(_pad(report.output / "preset.xml", 0, 1).get("filename"), r".\vocals")
 
     def test_same_file_with_two_regions_stays_two_files(self):
         source = _wav(1000, 3)
@@ -385,7 +387,7 @@ class ExportTests(unittest.TestCase):
         )
         path = self.write_project("lines", body, {"Take.wav": source})
         report = tool.export_preset(tool.read_project(path), self.root / "out")
-        lengths = sorted(tool._pcm(wav)[2] for wav in report.samples.glob("*.wav"))
+        lengths = sorted(tool._pcm(wav)[2] for wav in report.samples.rglob("*.wav"))
         self.assertEqual(lengths, [100, 300])
 
     def test_bounced_excerpt_keeps_its_opening(self):
@@ -412,8 +414,29 @@ class ExportTests(unittest.TestCase):
             {"takes/Take.wav": long_wav, "Take.wav": short_wav},
         )
         report = tool.export_preset(tool.read_project(path), self.root / "out")
-        phrase = next(item for item in report.samples.glob("*.wav") if tool._pcm(item)[2] != long_frames)
+        phrase = next(item for item in report.samples.rglob("*.wav") if tool._pcm(item)[2] != long_frames)
         self.assertEqual(tool._pcm(phrase)[2], excerpt_frames)
+
+    def test_once_stored_start_keeps_a_bounced_file_and_trims_a_real_tail(self):
+        frames = 70001
+        body = b"".join(
+            [
+                tool.encode_string("Phrase"),
+                tool.encode_string("/old/Phrase.wav"),
+                tool.encode_bounced_region(100, frames - 1),
+                tool.encode_string("Pattern 1"),
+                tool.encode_string("Tail"),
+                tool.encode_string("/old/Tail.wav"),
+                tool.encode_region(500, frames - 1),
+                tool.encode_string("Pattern 1"),
+            ]
+        )
+        path = self.write_project("bounce", body, {"Phrase.wav": _wav(frames, 4), "Tail.wav": _wav(frames, 5)})
+        report = tool.export_preset(tool.read_project(path), self.root / "out")
+        phrase = next(report.samples.rglob("Phrase.wav"))
+        tail = next(report.samples.rglob("Tail.wav"))
+        self.assertEqual(tool._pcm(phrase)[2], frames)
+        self.assertEqual(tool._pcm(tail)[2], frames - 500)
 
 
 def _wav_from(samples: list[int]) -> bytes:
@@ -486,27 +509,27 @@ class ExampleProjectTests(unittest.TestCase):
             self.assertEqual(EXAMPLE.read_bytes(), source)
             self.assertEqual(TEMPLATE.read_bytes(), template)
             preset_text = (report.output / "preset.xml").read_text()
-            self.assertTrue((report.samples / "Meat Kira.wav").is_file())
-            self.assertTrue((report.samples / "Bright Kira C1.wav").is_file())
-            self.assertTrue((report.samples / "Kick Abbrand 1.wav").is_file())
-            self.assertIn("\\america-is-many-things\\Bright Kira C1.wav", preset_text)
-            self.assertIn("\\america-is-many-things\\Kick Abbrand 1.wav", preset_text)
+            self.assertTrue((report.samples / "Meat Kira" / "Meat Kira.wav").is_file())
+            self.assertTrue((report.samples / "Bright Kira" / "Bright Kira C1.wav").is_file())
+            self.assertTrue((report.samples / "Abbrand Kit" / "Kick Abbrand 1.wav").is_file())
+            self.assertIn(".\\Bright Kira\\Bright Kira C1.wav", preset_text)
+            self.assertIn(".\\Abbrand Kit\\Kick Abbrand 1.wav", preset_text)
             for cell in ET.parse(report.output / "preset.xml").getroot().iter("cell"):
                 if cell.get("layer") == "0" and cell.get("filename"):
-                    self.assertTrue(cell.get("filename").endswith(".wav"), cell.get("filename"))
-                    self.assertNotEqual(cell.get("filename"), r"\america-is-many-things")
-            america = next(report.samples.glob("*America Many Things.wav"))
+                    self.assertTrue(cell.get("filename").startswith(".\\"), cell.get("filename"))
+                    self.assertFalse(cell.get("filename").lower().endswith(".wav"), cell.get("filename"))
+            america = next(report.samples.rglob("*America Many Things.wav"))
             source_america = next((EXAMPLE.parent / "america-is-many-things Samples").rglob("*America Many Things.wav"))
-            self.assertLess(tool._pcm(america)[2], tool._pcm(source_america)[2])
-            over = report.samples / "81 Over Seas 2.wav"
+            self.assertEqual(tool._pcm(america)[2], tool._pcm(source_america)[2])
+            over = next(report.samples.rglob("81 Over Seas 2.wav"))
             self.assertEqual(tool._pcm(over)[2], 34111)
-            kick = report.samples / "Kick Abbrand 1.wav"
+            kick = report.samples / "Abbrand Kit" / "Kick Abbrand 1.wav"
             source_kick = next((EXAMPLE.parent / "america-is-many-things Samples").rglob("Kick Abbrand 1.wav"))
             self.assertGreater(tool._pcm(kick)[2], tool._pcm(source_kick)[2] - 100)
-            bright = report.samples / "Bright Kira C1.wav"
+            bright = report.samples / "Bright Kira" / "Bright Kira C1.wav"
             source_bright = next((EXAMPLE.parent / "america-is-many-things Samples").rglob("Bright Kira C1.wav"))
             self.assertEqual(tool._pcm(bright)[2], tool._pcm(source_bright)[2])
-            perc_files = list(report.samples.glob("Perc*.wav"))
+            perc_files = list(report.samples.rglob("Perc*.wav"))
             self.assertTrue(perc_files)
             source_perc = next(
                 path
@@ -514,7 +537,7 @@ class ExampleProjectTests(unittest.TestCase):
                 if path.name.startswith("Perc")
             )
             self.assertLess(tool._pcm(perc_files[0])[2], tool._pcm(source_perc)[2] // 4)
-            rob = sorted(report.samples.glob("*Rob Freedom*.wav"), key=lambda item: item.stat().st_size)
+            rob = sorted(report.samples.rglob("*Rob Freedom*.wav"), key=lambda item: item.stat().st_size)
             self.assertGreaterEqual(len(rob), 2)
             self.assertNotEqual(rob[0].stat().st_size, rob[-1].stat().st_size)
             kit = _pad(report.output / "preset.xml", 0, 2)
@@ -524,9 +547,10 @@ class ExampleProjectTests(unittest.TestCase):
             self.assertEqual(preset_text.count("ccnum=\"31\""), 2)
             self.assertNotIn("ccnum=\"111\"", preset_text)
             preset_folder = root / "card" / "PRESETS" / "america-is-many-things"
-            self.assertEqual([item.name for item in preset_folder.iterdir()], ["preset.xml"])
-            self.assertTrue((root / "card" / "america-is-many-things" / "Kick Abbrand 1.wav").is_file())
-            self.assertFalse(list((root / "card" / "america-is-many-things").glob("*.xml")))
+            self.assertTrue((preset_folder / "preset.xml").is_file())
+            self.assertFalse(list(preset_folder.glob("*.wav")))
+            self.assertTrue((preset_folder / "Abbrand Kit" / "Kick Abbrand 1.wav").is_file())
+            self.assertFalse((root / "card" / "america-is-many-things").exists())
         reread = tool.read_project(EXAMPLE)
         self.assertFalse(any(sound.name == "Arp Tired" and sound.samples for group in reread.groups for sound in group.sounds))
 

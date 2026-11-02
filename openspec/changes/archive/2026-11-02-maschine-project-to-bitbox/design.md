@@ -12,7 +12,7 @@ The host template's eight pads, MIDI learns, and full-left pan are the preset th
 
 **Goals:**
 
-- One command reads a project and writes a card layout: wavs only in `<name>/`, and only `preset.xml` in `PRESETS/<name>/`. `--dest` is the card root. An existing `Presets` or `PRESETS` directory is reused.
+- One command reads a project and writes a packed preset: `PRESETS/<name>/preset.xml` with one subdirectory of wavs per pad. `--dest` is the card root. An existing `Presets` or `PRESETS` directory is reused. The layout matches a preset saved on the module, such as `presets/PRESETS/New Packed`.
 - Group order and the kit-versus-multi-sample rule come from the specs, checked against this example.
 
 **Non-Goals:**
@@ -27,7 +27,7 @@ The host template's eight pads, MIDI learns, and full-left pan are the preset th
 3. **Collapse duplicate files on one sound only when no distinct root note is stored.** `Perc[128] Abbrand.wav` is the case to check. If the repeats carry different root notes or slice points, they stay separate. If they do not, the sound lists the file once.
 4. **Root notes.** Prefer the note stored next to the path in the project. The implementation has to locate that field using Bright Kira, whose file names already say the note. If the field is not recovered, parse a note name in the file name with C4 as MIDI note 60. One-shot kits do not use those names. They take the notes that host pad sends: 36 and upward, except the channel 3 pad, which is Group C's natural minor scale from 48.
 5. **A mixed group keeps the multi-sample.** One Bitbox pad cannot be a chromatic instrument and a drum kit at once. If Meat Kira and Bright Kira turn out to be one group, Bright Kira occupies the pad and Meat Kira is named in the report. Splitting them onto two pads would spend a second channel on one group. That stays available later if the recovered groups show it is the wrong call for this project.
-6. **Bitbox paths.** Copied wavs live only in `<name>/` at the card root. `preset.xml` lives only in `PRESETS/<name>/` and refers to the wavs as `\Folder Name\file.wav`, using backslashes. A cell's filename is one of those wavs, so the Micro shows the sample or part, not the preset folder. A Maschine start and end become a trimmed wav, because an asset cell cannot store its own region. Kit notes meet each other, and the first note extends down to note 0. The template's `modsource` lines are copied through, not rewritten.
+6. **Packed preset paths.** `preset.xml` and the wavs live together in `PRESETS/<name>/`. Each filled pad gets a subdirectory named from that pad's label, and only that pad's wavs go in it. There is no sample folder at the card root. Paths are preset-relative and use backslashes: the sample cell's filename is `.\Pad Name`, and each asset is `.\Pad Name\file.wav`. The captured preset `New Packed` is the witness: its cells are `.\FMarimba` and `.\Choir Lab`, and its assets are `.\FMarimba\FMarimba-041.wav`. The cell names the folder, so the Micro shows the pad. A start and end stored as a pair become a trimmed wav, because an asset cell cannot store its own region. A start stored once, with the end on the last frame of the file, is a bounce of an earlier edit, so that wav is copied whole. Kit notes meet each other, and the first note extends down to note 0. The template's `modsource` lines are copied through, not rewritten. `New Packed` is a layout witness only; the exporter still starts from the host template, so the learned controllers and full-left pan stay.
 7. **Tests that can run without the example.** Checked-in tests use a small stand-in document with the same length-prefixed paths. The real project is an extra local check, because `MaschineProjects/` is not in git.
 
 ## Risks / Trade-offs
@@ -36,6 +36,7 @@ The host template's eight pads, MIDI learns, and full-left pan are the preset th
 - [A long path may not fit in one length byte] → The dialogue paths are the check. Join continued pieces rather than dropping the file.
 - [C4 = 60 may not match Maschine's on-screen octave] → Confirm against the root stored beside Bright Kira before trusting the file name.
 - [The hand-built host template has not been re-saved by the module] → The exporter still starts from that file. A module save of the template can replace it later without changing this tool's rules.
+- [An earlier export left wavs in `<name>/` at the card root] → A packed export writes only `PRESETS/<name>/` and leaves that older folder where it is. Remove it from the card by hand.
 
 ## Migration Plan
 

@@ -88,6 +88,7 @@ class Sample:
     resolved: Path | None = None
     start: int | None = None
     end: int | None = None
+    bounced: bool = False
 
 
 @dataclass
@@ -152,17 +153,20 @@ def encode_root(note: int) -> bytes:
     return bytes((0, 1, note, 1, note, 1, note))
 
 
+def _tagged_count(value: int) -> bytes:
+    if value < 65536:
+        return bytes((2,)) + value.to_bytes(2, "little")
+    return bytes((3,)) + value.to_bytes(3, "little")
+
+
 def encode_region(start: int, end: int) -> bytes:
     """Repeated tagged frame counts, matching a Maschine sample zone."""
+    return _tagged_count(start) * 2 + _tagged_count(end) * 2
 
-    def tagged(value: int) -> bytes:
-        if value < 65536:
-            chunk = bytes((2,)) + value.to_bytes(2, "little")
-        else:
-            chunk = bytes((3,)) + value.to_bytes(3, "little")
-        return chunk + chunk
 
-    return tagged(start) + tagged(end)
+def encode_bounced_region(start: int, end: int) -> bytes:
+    """A bounce stores the old start once and repeats the new file's last frame."""
+    return _tagged_count(start) + b"\x00" + _tagged_count(end) * 2
 
 
 def iter_strings(data: bytes):
@@ -227,13 +231,13 @@ def stored_root(data: bytes, end: int) -> int | None:
     return None
 
 
-def play_region(window: bytes) -> tuple[int, int] | None:
+def play_region(window: bytes) -> tuple[int, int, bool] | None:
     """Start and end frames stored beside a sample path.
 
-    A play region is a repeated tagged integer, optionally with a smaller
-    single integer just before it. The file length that follows is not the end
-    of the edit. Returns inclusive frame indexes, or None when the zone does
-    not store one.
+    A slice repeats both edges. A bounce stores the old start once and repeats
+    the end, which is the last frame of the wav that replaced the longer take.
+    The third value is true for that bounce. Returns inclusive frame indexes,
+    or None when the zone does not store one.
     """
     repeated: list[tuple[int, int]] = []
     single_before: int | None = None
@@ -269,11 +273,12 @@ def play_region(window: bytes) -> tuple[int, int] | None:
             continue
         offset += 1
     if len(repeated) >= 2 and repeated[1][1] > repeated[0][1]:
-        return repeated[0][1], repeated[1][1]
+        return repeated[0][1], repeated[1][1], False
     if repeated:
         end = repeated[0][1]
-        start = single_before if single_before is not None and single_before < end else 0
-        return start, end
+        if single_before is not None and single_before < end:
+            return single_before, end, True
+        return 0, end, False
     return None
 
 
@@ -370,6 +375,7 @@ def read_project(path: Path) -> Project:
                             None,
                             region[0] if region else None,
                             region[1] if region else None,
+                            bounced=bool(region and region[2]),
                         )
                     )
         sounds.append((pos, Sound(name, _collapse(owned), unsupported=not owned)))
@@ -565,9 +571,7 @@ def export_preset(
     folder_name = project.source.stem
     staging = tempfile.TemporaryDirectory()
     stage = Path(staging.name)
-    sample_dir = stage / folder_name
-    preset_dir = stage / "preset"
-    sample_dir.mkdir()
+    preset_dir = stage / folder_name
     preset_dir.mkdir()
 
     root = ET.fromstring(template_bytes)
@@ -583,8 +587,7 @@ def export_preset(
     held: list[str] = []
     overflow: list[str] = []
     unsupported: list[str] = []
-    used: dict[tuple, str] = {}
-    stems: set[str] = set()
+    folders: set[str] = set()
     asset_row = 0
     slot_index = 0
     labels = names or {}
@@ -611,18 +614,16 @@ def export_preset(
         held.extend(f"{label}: {name}" for name in held_here)
         overflow.extend(f"{label}: {name}" for name in overflow_here)
         override = labels.get(str(slot_index)) or labels.get(label)
-        written = _fill_pad(
+        written, pad_folder = _fill_pad(
             session,
             row,
             column,
-            folder_name,
             playable,
-            used,
-            stems,
-            sample_dir,
+            preset_dir,
             _clip_name(group, playable, override),
+            folders,
         )
-        asset_row = _add_assets(session, asset_row, row, column, folder_name, playable, written)
+        asset_row = _add_assets(session, asset_row, row, column, pad_folder, playable, written)
 
     for index in range(slot_index, len(PAD_SLOTS)):
         row, column = PAD_SLOTS[index]
@@ -633,16 +634,15 @@ def export_preset(
     tree.write(preset_dir / "preset.xml", encoding="UTF-8", xml_declaration=True)
     installed = None
     if output_dir is not None:
-        installed = _install_card(sample_dir, preset_dir / "preset.xml", Path(output_dir), folder_name)
+        installed = _install_card(preset_dir, Path(output_dir), folder_name)
     if dest is not None:
-        copied = _install_card(sample_dir, preset_dir / "preset.xml", Path(dest), folder_name)
+        copied = _install_card(preset_dir, Path(dest), folder_name)
         if installed is None:
             installed = copied
     staging.cleanup()
-    preset_out, sample_out = installed
     return ExportReport(
-        preset_out,
-        sample_out,
+        installed,
+        installed,
         placed_names,
         skipped,
         held,
@@ -676,13 +676,12 @@ def _fill_pad(
     session,
     row: int,
     column: int,
-    folder_name: str,
     placements: list[Placement],
-    used: dict[tuple, str],
-    stems: set[str],
-    output: Path,
+    preset_dir: Path,
     clip_name: str,
-) -> dict[int, str]:
+    folders: set[str],
+) -> tuple[dict[int, str], str]:
+    """Wavs for one pad live in a folder beside preset.xml. The cell names that folder."""
     cell = _cell(session, row, column)
     params = cell.find("params")
     cell.set("type", "sample")
@@ -692,26 +691,27 @@ def _fill_pad(
         params.set("deftemplate", "0")
         params.set("panpos", "-1000")
         params.set("rootnote", str(placements[0].root))
+    pad_folder = _unique_stem(clip_name, folders)
+    pad_dir = preset_dir / pad_folder
+    pad_dir.mkdir()
     written: dict[int, str] = {}
+    stems: set[str] = set()
     several = len(placements) > 1
     for placement in placements:
         source = placement.sample.resolved
         if source is None:
             continue
-        key = (source, placement.sample.start, placement.sample.end)
-        if key not in used:
-            stem = _unique_stem(_zone_stem(placement, several), stems)
-            filename = stem + ".wav"
-            _write_sample(source, output / filename, placement.sample.start, placement.sample.end)
-            used[key] = filename
-        written[id(placement)] = used[key]
-    primary = written[id(placements[0])]
-    display = clip_name + ".wav"
-    if display != primary:
-        display = _unique_stem(Path(display).stem, stems) + ".wav"
-        shutil.copy2(output / primary, output / display)
-    cell.set("filename", "\\" + folder_name + "\\" + display)
-    return written
+        filename = _unique_stem(_zone_stem(placement, several), stems) + ".wav"
+        _write_sample(
+            source,
+            pad_dir / filename,
+            placement.sample.start,
+            placement.sample.end,
+            placement.sample.bounced,
+        )
+        written[id(placement)] = filename
+    cell.set("filename", ".\\" + pad_folder)
+    return written, pad_folder
 
 
 def _zone_stem(placement: Placement, several: bool) -> str:
@@ -748,7 +748,7 @@ def _unique_stem(stem: str, stems: set[str]) -> str:
     return chosen
 
 
-def _write_sample(source: Path, dest: Path, start: int | None, end: int | None) -> None:
+def _write_sample(source: Path, dest: Path, start: int | None, end: int | None, bounced: bool = False) -> None:
     parsed = _pcm(source)
     if parsed is None or start is None or end is None:
         shutil.copy2(source, dest)
@@ -763,8 +763,12 @@ def _write_sample(source: Path, dest: Path, start: int | None, end: int | None) 
     if end - start < 32 or (start <= 1 and frames - 1 - end < 200):
         shutil.copy2(source, dest)
         return
-    # A bounced excerpt already starts where the project marker points in the
-    # longer recording. Trimming it again drops the beginning of the phrase.
+    # A bounce stores the old start once and sets the end to the last frame of
+    # the wav that replaced the longer take. That start is not an index into
+    # this file. A longer copy beside it is the same case, heard directly.
+    if bounced and start > 1 and frames - 1 - end <= 2:
+        shutil.copy2(source, dest)
+        return
     if frames - 1 - end <= 2 and _excerpt_already_starts_at(source, pcm, frame, start):
         shutil.copy2(source, dest)
         return
@@ -862,26 +866,17 @@ def _preset_root(root: Path) -> Path:
     return root / "PRESETS"
 
 
-def _install_card(sample_dir: Path, preset_xml: Path, root: Path, folder_name: str) -> tuple[Path, Path]:
-    """Samples go in ``root/<name>/``. Only preset.xml goes in ``root/PRESETS/<name>/``."""
-    sample_dest = root / folder_name
+def _install_card(preset_dir: Path, root: Path, folder_name: str) -> Path:
+    """Packed preset: ``PRESETS/<name>/preset.xml`` plus one wav folder per pad."""
     preset_dest = _preset_root(root) / folder_name
-    if sample_dest.exists() and preset_dest.exists() and sample_dest.resolve() == preset_dest.resolve():
-        raise SystemExit(f"Refusing to mix samples and preset.xml in {sample_dest}")
-    if sample_dest.exists():
-        shutil.rmtree(sample_dest)
-    sample_dest.mkdir(parents=True)
-    for wav in sample_dir.iterdir():
-        if wav.is_file() and wav.suffix.lower() == ".wav":
-            shutil.copy2(wav, sample_dest / wav.name)
     if preset_dest.exists():
         shutil.rmtree(preset_dest)
-    preset_dest.mkdir(parents=True)
-    shutil.copy2(preset_xml, preset_dest / "preset.xml")
-    return preset_dest, sample_dest
+    preset_dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(preset_dir, preset_dest)
+    return preset_dest
 
 
-def _add_assets(session, asset_row, pad_row, pad_column, folder_name, placements: list[Placement], names: dict[int, str]) -> int:
+def _add_assets(session, asset_row, pad_row, pad_column, pad_folder, placements: list[Placement], names: dict[int, str]) -> int:
     insert_at = len(session)
     for index, cell in enumerate(list(session)):
         if cell.get("type") == "ioconnectin":
@@ -890,7 +885,7 @@ def _add_assets(session, asset_row, pad_row, pad_column, folder_name, placements
     for placement in placements:
         if placement.sample.resolved is None:
             continue
-        filename = "\\" + folder_name + "\\" + names[id(placement)]
+        filename = ".\\" + pad_folder + "\\" + names[id(placement)]
         asset = ET.Element("cell", {"row": str(asset_row), "filename": filename, "type": "asset"})
         ET.SubElement(
             asset,
@@ -993,12 +988,12 @@ def main(argv: list[str] | None = None) -> ExportReport:
     parser.add_argument(
         "--out",
         type=Path,
-        help="Card-root mirror: wavs in <name>/, and only preset.xml in PRESETS/<name>/",
+        help="Card-root mirror: a packed preset in PRESETS/<name>/, wavs in a folder per pad",
     )
     parser.add_argument(
         "--dest",
         type=Path,
-        help="Card root. Wavs go in <name>/ and only preset.xml goes in PRESETS/<name>/",
+        help="Card root. Writes a packed preset under PRESETS/<name>/ and leaves other files",
     )
     parser.add_argument(
         "--names",
